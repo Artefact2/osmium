@@ -56,6 +56,10 @@ $hidden-char: '\0025B8';
 		border-top: none;
 	}
 
+	&.missingprereqs {
+		border: 1px dashed $overflow-text-color !important;
+	}
+
 	&> strong.qty {
 		padding-left: 0.1em;
 		padding-right: 0.1em;

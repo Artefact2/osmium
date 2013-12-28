@@ -1,5 +1,6 @@
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -294,6 +295,13 @@ osmium_send_clf = function(opts) {
 				$("section#modules div.slots." + payload.ncycles[i][0] + " li").filter(function() {
 					return $(this).data('index') == payload.ncycles[i][1];
 				}).children('span.charge').addClass('hasncycles').append(s);
+			}
+
+			$("section#modules div.slots li.missingprereqs").removeClass('missingprereqs');
+			for(var i = 0; i < payload.missingprereqs.length; ++i) {
+				$("section#modules div.slots." + payload.missingprereqs[i][0] + " li").filter(function() {
+					return $(this).data('index') == payload.missingprereqs[i][1];
+				}).addClass('missingprereqs');
 			}
 
 			$("section#drones small.bayusage").text(

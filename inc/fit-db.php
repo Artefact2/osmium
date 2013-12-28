@@ -1,6 +1,7 @@
 <?php
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -1239,4 +1240,73 @@ function get_available_skillset_names_for_account() {
 	}
 
 	return $names;
+}
+
+/**
+ * Gets the skill prerequisites for a module/ship by id, with caching.
+ */
+function get_skill_prereqs_for_item($itemid) {
+	$cache_key = 'prereqs-'.$itemid;
+	$cache_file_prefix = 'Prereq_Cache_';
+	if ($cache = \Osmium\State\get_cache($cache_key, null, $cache_file_prefix)) {
+		return $cache;
+	}
+
+	$sem = \Osmium\State\semaphore_acquire($cache_key);
+	if ($cache = \Osmium\State\get_cache($cache_key, null, $cache_file_prefix)) {
+		\Osmium\Dogma\semaphore_release($sem);
+		return $cache;
+	}
+
+	$out = array();
+	$skillsq = \Osmium\Db\query_params(
+			'SELECT skills.value, skilllevels.value
+			FROM eve.dgmtypeattribs AS skills
+			INNER JOIN eve.dgmtypeattribs AS skilllevels ON
+			(skills.typeid = skilllevels.typeid AND
+			 ((skills.attributeid = 182 AND skilllevels.attributeid = 277) OR
+			  (skills.attributeid = 183 AND skilllevels.attributeid = 278) OR
+			  (skills.attributeid = 184 AND skilllevels.attributeid = 279)))
+			WHERE skills.typeid = $1', array($itemid));
+	while ($row = \Osmium\Db\fetch_row($skillsq)) {
+		$out[$row[0]] = $row[1];
+	}
+
+	\Osmium\State\put_cache($cache_key, $out, 0, $cache_file_prefix);
+	\Osmium\State\semaphore_release($sem);
+	return $out;
+}
+
+/**
+ * Takes in an array of item/module type IDs; returns an array with entries like:
+ *     input_type_id => array(
+ *         skill_type_id => required_level,
+ *         ...
+ *     )
+ */
+function get_skill_prereqs_for_items($items) {
+	if (!$items) {
+		return array();
+	}
+	$out = array();
+	foreach ($items as $typeid) {
+		$skills = get_skill_prereqs_for_item($typeid);
+		if ($skills) {
+			$out[$typeid] = $skills;
+		}
+	}
+	return $out;
+}
+
+function get_skill_prereqs_for_fit($fit) {
+	$modules = array();
+	foreach ($fit['modules'] as $type => $by_index) {
+		foreach ($by_index as $idx => $module) {
+			$modules[] = $module['typeid'];
+		}
+	}
+	if (!empty($fit['ship'])) {
+		$modules[] = $fit['ship']['typeid'];
+	}
+	return get_skill_prereqs_for_items($modules);
 }

@@ -1,6 +1,7 @@
 <?php
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,6 +44,47 @@ function print_formatted_attribute_category($identifier, $title, $titledata, $ti
 	echo "<h4$titleclass>$title <small>$titledata</small></h4>\n";
 	echo "<div>\n$contents</div>\n";
 	echo "</section>\n";
+}
+
+function print_formatted_mastery(&$fit, $relative) {
+	ob_start();
+	// XXX code duplication
+	$levels = array(
+		null => 'Untrained',
+		0 => '0',
+		1 => 'I',
+		2 => 'II',
+		3 => 'III',
+		4 => 'IV',
+		5 => 'V',
+	);
+
+	$skills_missing_by_moduleid = \Osmium\Fit\get_missing_prereqs_for_fit($fit);
+
+	if (!$skills_missing_by_moduleid) {
+		// TODO fancier mastery information here
+		echo "skills in order";
+	} else {
+		echo "Missing skills";
+		echo "<ul class='missingprereqs'>";
+		foreach ($skills_missing_by_moduleid as $moduleid => $skills) {
+			echo "<li>".escape(\Osmium\Fit\get_typename($moduleid))."<ul>";
+			foreach ($skills as $skillid => $level) {
+				$skillname = escape(\Osmium\Fit\get_typename($skillid));
+				$fancylevel = $levels[$level];
+				echo "<li>$skillname $fancylevel</li>";
+			}
+			echo "</ul></li>";
+		}
+		echo "</ul>";
+	}
+
+	print_formatted_attribute_category(
+		'mastery', 'Mastery',
+		"<span title='Effective skillset'>".$fit['skillset']['name']."</span>",
+		$skills_missing_by_moduleid ? 'overflow' : '',
+		ob_get_clean()
+	);
 }
 
 function print_formatted_engineering(&$fit, $relative, $capacitor) {
@@ -524,6 +566,7 @@ function print_formatted_loadout_attributes(&$fit, $relative = '.', $opts = arra
 	print_formatted_outgoing($fit, $relative);
 	print_formatted_navigation($fit, $relative);
 	print_formatted_targeting($fit, $relative);
+	print_formatted_mastery($fit, $relative);
 	print_formatted_misc($fit);
 }
 

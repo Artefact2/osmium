@@ -1,6 +1,7 @@
 <?php
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -88,7 +89,31 @@ foreach($capacitors as &$c) {
 	}
 }
 
+// XXX code duplication
+$levels = array(
+	null => 'Untrained',
+	0 => '0',
+	1 => 'I',
+	2 => 'II',
+	3 => 'III',
+	4 => 'IV',
+	5 => 'V',
+	);
+
 $ia = $attribopts['ia'] = \Osmium\Fit\get_interesting_attributes($local);
+
+$missing_by_moduleid = \osmium\Fit\get_missing_prereqs_for_fit($local);
+$fancy_skills_missing_by_moduleid = array();
+foreach ($missing_by_moduleid as $moduleid => $missing) {
+	$fancy_missing = array();
+	foreach ($missing as $skillid => $level) {
+		$fancy_missing[] = array(
+			'skill' => \Osmium\Chrome\escape(\Osmium\Fit\get_typename($skillid)),
+			'level' => $levels[$level],
+		);
+	}
+	$fancy_skills_missing_by_moduleid[$moduleid] = $fancy_missing;
+}
 
 $payload = array(
 	'clftoken' => $token,
@@ -103,18 +128,26 @@ $payload = array(
 		'maxactivedrones' => \Osmium\Dogma\get_char_attribute($local, 'maxActiveDrones'),
 	),
 	'capacitors' => $capacitors,
+	'missingprereqs' => array(),
 );
 
 foreach($local['modules'] as $slottype => $sub) {
 	foreach($sub as $index => $m) {
-		if(!isset($local['charges'][$slottype][$index])) continue;
-		dogma_get_number_of_module_cycles_before_reload(
-			$local['__dogma_context'], $m['dogma_index'], $ncycles
-		);
+		if(isset($local['charges'][$slottype][$index])) {
+			dogma_get_number_of_module_cycles_before_reload(
+				$local['__dogma_context'], $m['dogma_index'], $ncycles
+			);
 
-		if($ncycles !== -1) {
-			$payload['ncycles'][] = array(
-				$slottype, $index, $ncycles
+			if($ncycles !== -1) {
+				$payload['ncycles'][] = array(
+					$slottype, $index, $ncycles
+				);
+			}
+		}
+
+		if (!empty($fancy_skills_missing_by_moduleid[$m['typeid']])) {
+			$payload['missingprereqs'][] = array(
+				$slottype, $index, $fancy_skills_missing_by_moduleid[$m['typeid']]
 			);
 		}
 	}
