@@ -26,6 +26,14 @@ if(!get_ini_setting('tolerate_errors')) {
 	ob_start();
 	error_reporting(-1);
 	set_error_handler(function($errno, $errstr, $errfile, $errline) {
+		if (!error_reporting()) {
+			/*
+			 * Error reporting is off right now for whatever
+			 * reason. Probably there was an @ and we're supposed
+			 * to ignore it. I hate PHP. -jboning
+			 */
+			return;
+		}
 		while(ob_end_clean()) { /* Erase ALL levels of output buffering. */ }
 		ob_start();
 		$errfile = explode('/', $errfile);
