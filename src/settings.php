@@ -22,10 +22,7 @@ require __DIR__.'/../inc/root.php';
 
 const MASK = '********';
 
-if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "You are not logged in.");
-}
-
+\Osmium\State\assume_logged_in('.');
 $a = \Osmium\State\get_state('a');
 
 if(isset($_POST['key_id'])) {
@@ -69,7 +66,7 @@ echo "<li><a href='#s_characters'>Characters and skills</a></li>\n";
 echo "</ul>\n";
 
 echo "<section id='s_changepw'>\n<h1>Change password</h1>\n";
-\Osmium\Forms\print_form_begin();
+\Osmium\Forms\print_form_begin("#s_changepw");
 
 if(isset($_POST['curpw'])) {
 	$cur = $_POST['curpw'];
@@ -127,7 +124,7 @@ if($a['apiverified'] !== 't') {
 echo "<h2>API credentials</h2>\n";
 
 \Osmium\State\print_api_link();
-\Osmium\Forms\print_form_begin();
+\Osmium\Forms\print_form_begin("#s_apiauth");
 
 \Osmium\Forms\print_generic_field('API Key ID', 'text', 'key_id', null, 
                                   \Osmium\Forms\FIELD_REMEMBER_VALUE);
@@ -144,7 +141,7 @@ echo "<p>You can create characters with custom skillsets to use in loadouts.</p>
 
 echo "<h3>Create a new character</h3>\n";
 
-\Osmium\Forms\print_form_begin();
+\Osmium\Forms\print_form_begin("#s_characters");
 
 if(isset($_POST['newcharname']) && $_POST['newcharname'] !== '') {
 	$name = $_POST['newcharname'];
@@ -275,7 +272,7 @@ if(isset($_POST['delete']) && is_array($_POST['delete'])) {
 	die();
 }
 
-echo "<form method='post' action='".\Osmium\Chrome\escape($_SERVER['REQUEST_URI'])."'>\n";
+echo "<form method='post' action='#s_characters'>\n";
 echo "<table class='d scharacters'>\n<thead>\n";
 echo "<tr>\n<th>Name</th>\n<th>Key ID</th>\n<th>Verification code</th>\n<th>Import character name</th>\n<th>Last import date</th>\n<th>Actions</th>\n</tr>\n";
 echo "</thead>\n<tfoot></tfoot>\n<tbody>\n";

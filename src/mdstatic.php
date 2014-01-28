@@ -27,7 +27,7 @@ $allowed = realpath(__DIR__.'/md/');
 $f = realpath($f);
 
 if(strpos($f, $allowed) !== 0) {
-	\Osmium\fatal(404, "File not found");
+	\Osmium\fatal(404);
 }
 
 \Osmium\Chrome\print_header($data['title'], $data['relative']);

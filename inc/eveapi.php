@@ -103,7 +103,11 @@ function fetch($name, array $params, $timeout = null) {
 	}
 
 	$expires = strtotime((string)$xml->cachedUntil);
-	$ttl = $expires - time() + 1;
+	$curtime = strtotime((string)$xml->currentTime);
+	/* Cache for at least 1 minute, in case the cachedUntil values are
+	 * erroneous */
+	$ttl = min($expires - $curtime + 1, 60);
+
 	\Osmium\State\put_cache($key, $raw_xml, $ttl, 'API_');
 	\Osmium\State\semaphore_release($sem);
 	return $xml;

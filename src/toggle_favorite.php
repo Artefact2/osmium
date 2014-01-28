@@ -20,14 +20,12 @@ namespace Osmium\ToggleFavorite;
 
 require __DIR__.'/../inc/root.php';
 
-if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, 'Not logged in.');
-}
+\Osmium\State\assume_logged_in('..');
 
 $loadoutid = intval($_GET['loadoutid']);
 
 if(!isset($_GET['tok']) || $_GET['tok'] != \Osmium\State\get_token()) {
-	\Osmium\fatal(403, 'Invalid token.');
+	\Osmium\fatal(400);
 }
 
 $accountid = \Osmium\State\get_state('a')['accountid'];
@@ -43,7 +41,7 @@ $fav = \Osmium\Db\fetch_row(\Osmium\Db\query_params(
 
 if($fav === false) {
 	if(!\Osmium\State\can_view_fit($loadoutid)) {
-		\Osmium\fatal(404, 'No such loadout.');
+		\Osmium\fatal(404);
 	}
 	$fit = \Osmium\Fit\get_fit($loadoutid);
 	if(!\Osmium\State\can_access_fit($fit) || !\Osmium\State\is_fit_green($loadoutid)) {

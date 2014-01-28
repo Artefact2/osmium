@@ -20,7 +20,6 @@ namespace Osmium\Chrome;
 
 define(
 	__NAMESPACE__.'\XHTML',
-	false && /* XXX: jsPlumb does not play nice with XHTML, fixed in staging */
 	isset($_SERVER['HTTP_ACCEPT']) && (
 		strpos($_SERVER['HTTP_ACCEPT'], 'application/xhtml+xml') !== false
 	)
@@ -529,7 +528,6 @@ function sanitize_html($html) {
 		$config->set('Attr.AllowedClasses', array());
 		$config->set('HTML.Nofollow', true);
 		$config->set('CSS.AllowedProperties', array());
-		$config->set('AutoFormat.DisplayLinkURI', true);
 		$config->set('AutoFormat.Linkify', true);
 
 		$purifier = new \HTMLPurifier($config);
@@ -555,7 +553,6 @@ function sanitize_html_phrasing($html) {
 		$config->set('HTML.Nofollow', true);
 		$config->set('CSS.AllowedProperties', array());
 		$config->set('HTML.AllowedElements', 'a, abbr, b, cite, code, del, em, i, ins, kbd, q, s, samp, small, span, strong, sub, sup');
-		$config->set('AutoFormat.DisplayLinkURI', true);
 		$config->set('AutoFormat.Linkify', true);
 
 		$purifier = new \HTMLPurifier($config);
@@ -665,7 +662,7 @@ function format_number_with_unit($number, $unitid, $unitdisplayname) {
 		if($row !== false) {
 			$image = '';
 			if($row[1] !== null) {
-				$image = "<img src='http://image.eveonline.com/Type/".$row[1]."_64.png' alt='' /> ";
+				$image = "<img src='//image.eveonline.com/Type/".$row[1]."_64.png' alt='' /> ";
 			}
 			return $image.escape($row[0]);
 		}
@@ -675,7 +672,7 @@ function format_number_with_unit($number, $unitid, $unitdisplayname) {
 	case 116: /* Type ID */
 		$typename = \Osmium\Fit\get_typename($number);
 		if($typename !== false) {
-			return "<img src='http://image.eveonline.com/Type/".$number."_64.png' alt='' /> "
+			return "<img src='//image.eveonline.com/Type/".$number."_64.png' alt='' /> "
 				.escape($typename);
 		}
 		$unitdisplayname = 'Type ID';
@@ -733,4 +730,19 @@ function sprite($relative, $alt, $grid_x, $grid_y, $grid_width, $grid_height = n
 	$alt = escape($alt);
 
 	return "<span class='mainsprite' style='width: {$width}px; height: {$height}px;'><img src='{$relative}/static-".\Osmium\STATICVER."/icons/sprite.png' alt='{$alt}' title='{$alt}' style='width: {$imgwidth}px; height: {$imgheight}px; top: -{$posx}px; left: -{$posy}px;' /></span>";
+}
+
+/** Format a skill level in roman numerals. */
+function format_skill_level($level) {
+	static $levels = array(
+		null => 'Untrained',
+		0 => '0',
+		1 => 'I',
+		2 => 'II',
+		3 => 'III',
+		4 => 'IV',
+		5 => 'V',
+	);
+
+	return isset($levels[$level]) ? $levels[$level] : 'Unknown';
 }

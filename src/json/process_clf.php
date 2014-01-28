@@ -1,6 +1,7 @@
 <?php
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -89,6 +90,8 @@ foreach($capacitors as &$c) {
 }
 
 $ia = $attribopts['ia'] = \Osmium\Fit\get_interesting_attributes($local);
+list($prereqs, $missing) = \Osmium\Fit\get_skill_prerequisites_and_missing_prerequisites($local);
+$attribopts['prerequisites'] = $prereqs;
 
 $payload = array(
 	'clftoken' => $token,
@@ -103,19 +106,21 @@ $payload = array(
 		'maxactivedrones' => \Osmium\Dogma\get_char_attribute($local, 'maxActiveDrones'),
 	),
 	'capacitors' => $capacitors,
+	'missingprereqs' => $missing,
 );
 
 foreach($local['modules'] as $slottype => $sub) {
 	foreach($sub as $index => $m) {
-		if(!isset($local['charges'][$slottype][$index])) continue;
-		dogma_get_number_of_module_cycles_before_reload(
-			$local['__dogma_context'], $m['dogma_index'], $ncycles
-		);
-
-		if($ncycles !== -1) {
-			$payload['ncycles'][] = array(
-				$slottype, $index, $ncycles
+		if(isset($local['charges'][$slottype][$index])) {
+			dogma_get_number_of_module_cycles_before_reload(
+				$local['__dogma_context'], $m['dogma_index'], $ncycles
 			);
+
+			if($ncycles !== -1) {
+				$payload['ncycles'][] = array(
+					$slottype, $index, $ncycles
+				);
+			}
 		}
 	}
 }
@@ -182,6 +187,13 @@ if($type === 'new') {
 					$err,
 				);
 			}
+		} else if(\Osmium\Reputation\is_fit_public($local) && !\Osmium\Reputation\has_privilege(
+			\Osmium\Reputation\PRIVILEGE_CREATE_LOADOUT
+		)) {
+			$payload['form-errors'][] = [
+				'metadata', 'select#view_perms',
+				"You don't have the privilege to create public loadouts. Please select a different view permission or visibility."
+			];
 		}
 
 		else {

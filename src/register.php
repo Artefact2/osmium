@@ -20,9 +20,7 @@ namespace Osmium\Page\Register;
 
 require __DIR__.'/../inc/root.php';
 
-if(\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "You are already logged in.");
-}
+\Osmium\State\assume_logged_out();
 
 if(isset($_POST['account_name'])) {
 	$q = \Osmium\Db\query_params('SELECT COUNT(accountid) FROM osmium.accounts WHERE accountname = $1', array($_POST['account_name']));
@@ -72,6 +70,8 @@ if(isset($_POST['account_name'])) {
 \Osmium\Chrome\print_header('Account creation', '.');
 
 echo "<h1>Account creation</h1>\n";
+
+require \Osmium\ROOT.'/inc/login-httpscheck.php';
 
 echo "<p>Creating an account allows you to:</p>
 <ul>

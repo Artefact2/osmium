@@ -6,5 +6,6 @@
 # If your git "commit name" is not the same as your real name,
 # you should also add an entry in the .mailmap file.
 
+Josiah Boning <jboning@gmail.com>, skill prerequisite display
 Romain Dalmaso <artefact2@gmail.com>, original author
 Vincent Weber <mail@jognu.net>, allied visibility

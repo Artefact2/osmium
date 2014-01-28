@@ -20,10 +20,7 @@ namespace Osmium\Page\EditSkillset;
 
 require __DIR__.'/../inc/root.php';
 
-if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "You are not logged in.");
-}
-
+\Osmium\State\assume_logged_in('..');
 $a = \Osmium\State\get_state('a');
 $name = urldecode($_GET['name']);
 
@@ -34,18 +31,9 @@ $row = \Osmium\Db\fetch_assoc(
 		));
 
 if($row === false) {
-	\Osmium\fatal(404, "No such character.");
+	\Osmium\fatal(404);
 }
 
-$levels = array(
-	null => 'Untrained',
-	0 => 'Level 0',
-	1 => 'Level I',
-	2 => 'Level II',
-	3 => 'Level III',
-	4 => 'Level IV',
-	5 => 'Level V',
-	);
 $imported = $row['importedskillset'] !== null ? json_decode($row['importedskillset'], true) : array();
 $overridden = $row['overriddenskillset'] !== null ? json_decode($row['overriddenskillset'], true) : array();
 
@@ -83,18 +71,18 @@ while($s = \Osmium\Db\fetch_assoc($q)) {
 	$olevel = isset($overridden[$s['typeid']]) ? min(5, max(0, $overridden[$s['typeid']])) : null;
 
 	echo "<td>";
-	if($olevel !== null) echo "<del>".$levels[$ilevel]."</del>";
-	else echo $levels[$ilevel];
+	if($olevel !== null) echo "<del>".\Osmium\Chrome\format_skill_level($ilevel)."</del>";
+	else echo \Osmium\Chrome\format_skill_level($ilevel);
 	echo "</td>\n";
 
 	echo "<td><select name='override[".$s['typeid']."]'>\n";
 	echo "<option value='-2'>No override</option>\n";
-	foreach($levels as $k => $v) {
-		if($k == null) continue;
+	foreach([ 0, 1, 2, 3, 4, 5 ] as $k) {
 		if($k === $olevel) {
 			$selected = " selected='selected'";
 		} else $selected = '';
 
+		$v = \Osmium\Chrome\format_skill_level($k);
 		echo "<option value='$k'$selected>$v</option>\n";
 	}
 	echo "</select>\n";

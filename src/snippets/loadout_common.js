@@ -1,5 +1,6 @@
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -294,6 +295,23 @@ osmium_send_clf = function(opts) {
 				$("section#modules div.slots." + payload.ncycles[i][0] + " li").filter(function() {
 					return $(this).data('index') == payload.ncycles[i][1];
 				}).children('span.charge').addClass('hasncycles').append(s);
+			}
+
+			$(".missingskill").removeClass('missingskill');
+			$("section#modules div.slots > ul > li, section#drones div.drones > ul > li, section#implants div.implants > ul > li").each(function() {
+				var li = $(this);
+
+				if(li.data('typeid') in payload.missingprereqs) {
+					li.children('span.name').addClass('missingskill');
+				}
+
+				if(li.hasClass('hascharge') && li.data('chargetypeid') in payload.missingprereqs) {
+					li.children('span.charge').children('span.name').addClass('missingskill');
+				}
+			});
+			if("ship" in osmium_clf && "typeid" in osmium_clf.ship
+			   && osmium_clf.ship.typeid in payload.missingprereqs) {
+				$("section#ship h1 > strong > span.name").addClass('missingskill');
 			}
 
 			$("section#drones small.bayusage").text(

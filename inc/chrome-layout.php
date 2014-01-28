@@ -51,16 +51,23 @@ function print_header($title = '', $relative = '.', $index = true, $add_head = '
 	if(\Osmium\HTTPS) {
 		header(
 			"Content-Security-Policy: default-src 'none'"
-			." ; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'"
+			." ; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com http://cdnjs.cloudflare.com 'unsafe-inline'"
 			." ; font-src https://themes.googleusercontent.com"
 			." ; img-src 'self' https://image.eveonline.com"
 			." ; script-src 'self' https://cdnjs.cloudflare.com"
 			." ; connect-src 'self'"
 		);
+
+		if(\Osmium\get_ini_setting('https_available') && \Osmium\get_ini_setting('use_hsts')) {
+			$maxage = (int)\Osmium\get_ini_setting('https_cert_expiration') - time() - 86400;
+			if($maxage > 0) {
+				header('Strict-Transport-Policy: max-age='.$maxage);
+			}
+		}
 	} else {
 		header(
 			"Content-Security-Policy: default-src 'none'"
-			." ; style-src 'self' https://fonts.googleapis.com http://fonts.googleapis.com 'unsafe-inline'"
+			." ; style-src 'self' https://fonts.googleapis.com http://fonts.googleapis.com https://cdnjs.cloudflare.com http://cdnjs.cloudflare.com 'unsafe-inline'"
 			." ; font-src https://themes.googleusercontent.com http://themes.googleusercontent.com"
 			." ; img-src 'self' https://image.eveonline.com http://image.eveonline.com"
 			." ; script-src 'self' https://cdnjs.cloudflare.com http://cdnjs.cloudflare.com"
@@ -83,7 +90,7 @@ function print_header($title = '', $relative = '.', $index = true, $add_head = '
 	if(XHTML) {
 		header('Content-Type: application/xhtml+xml; charset=utf-8');
 		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-		echo "<html xmlns='http://www.w3.org/1999/xhtml'>\n";
+		echo "<html xmlns='http://www.w3.org/1999/xhtml' xmlns:v='urn:schemas-microsoft-com:vml'>\n";
 	} else {
 		header('Content-Type: text/html; charset=utf-8');
 		echo "<!DOCTYPE html>\n<html>\n";
@@ -161,6 +168,7 @@ function print_header($title = '', $relative = '.', $index = true, $add_head = '
 
 	\Osmium\Chrome\print_js_snippet('persistent_theme');
 	\Osmium\Chrome\print_js_snippet('notifications');
+	\Osmium\Chrome\print_js_snippet('feedback');
 	\Osmium\Chrome\add_js_data('relative', $__osmium_chrome_relative);
 }
 

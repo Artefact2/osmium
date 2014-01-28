@@ -161,7 +161,7 @@ CREATE TABLE contacts (
 --
 
 CREATE VIEW allowedloadoutsbyaccount AS
- SELECT DISTINCT a.accountid, 
+ SELECT a.accountid, 
     l.loadoutid
    FROM (((loadouts l
    JOIN accounts author ON ((author.accountid = l.accountid)))
@@ -455,20 +455,20 @@ CREATE TABLE fittingmodules (
 
 CREATE VIEW fittingfittedtypes AS
  SELECT t.fittinghash, 
-    ((((string_agg(DISTINCT (invtypes.typename)::text, ', '::text) || ', '::text) || COALESCE(string_agg(DISTINCT (pt.typename)::text, ', '::text), ' '::text)) || ', '::text) || COALESCE(string_agg(DISTINCT (invgroups.groupname)::text, ', '::text), ' '::text)) AS typelist
-   FROM (((((        (        (         SELECT fittingmodules.fittinghash, 
+    ((((string_agg((invtypes.typename)::text, ', '::text) || ', '::text) || COALESCE(string_agg((pt.typename)::text, ', '::text), ' '::text)) || ', '::text) || COALESCE(string_agg((invgroups.groupname)::text, ', '::text), ' '::text)) AS typelist
+   FROM (((((        (        (         SELECT DISTINCT fittingmodules.fittinghash, 
                                     fittingmodules.typeid
                                    FROM fittingmodules
                         UNION 
-                                 SELECT fittingcharges.fittinghash, 
+                                 SELECT DISTINCT fittingcharges.fittinghash, 
                                     fittingcharges.typeid
                                    FROM fittingcharges)
                 UNION 
-                         SELECT fittingdrones.fittinghash, 
+                         SELECT DISTINCT fittingdrones.fittinghash, 
                             fittingdrones.typeid
                            FROM fittingdrones)
         UNION 
-                 SELECT fittingimplants.fittinghash, 
+                 SELECT DISTINCT fittingimplants.fittinghash, 
                     fittingimplants.typeid
                    FROM fittingimplants) t
    JOIN eve.invtypes ON ((t.typeid = invtypes.typeid)))
@@ -989,35 +989,17 @@ CREATE TABLE loadouthistory (
 
 
 --
--- Name: searchableloadouts; Type: VIEW; Schema: osmium; Owner: -
---
-
-CREATE VIEW searchableloadouts AS
-         SELECT allowedloadoutsbyaccount.accountid, 
-            allowedloadoutsbyaccount.loadoutid
-           FROM (allowedloadoutsbyaccount
-      JOIN loadouts ON ((allowedloadoutsbyaccount.loadoutid = loadouts.loadoutid)))
-     WHERE ((loadouts.visibility = 0) AND (loadouts.viewpermission <> 0))
-UNION 
-         SELECT 0 AS accountid, 
-            allowedloadoutsanonymous.loadoutid
-           FROM (allowedloadoutsanonymous
-      JOIN loadouts ON ((allowedloadoutsanonymous.loadoutid = loadouts.loadoutid)))
-     WHERE (loadouts.visibility = 0);
-
-
---
 -- Name: loadoutscores; Type: VIEW; Schema: osmium; Owner: -
 --
 
 CREATE VIEW loadoutscores AS
- SELECT searchableloadouts.loadoutid, 
+ SELECT l.loadoutid, 
     COALESCE(uv.count, (0)::bigint) AS upvotes, 
     COALESCE(dv.count, (0)::bigint) AS downvotes, 
     ((((COALESCE((uv.count)::numeric, 0.5) + 1.9208) / (COALESCE((uv.count)::numeric, 0.5) + (COALESCE(dv.count, (0)::bigint))::numeric)) - ((1.96 * sqrt((((COALESCE((uv.count)::numeric, 0.5) * (COALESCE(dv.count, (0)::bigint))::numeric) / (COALESCE((uv.count)::numeric, 0.5) + (COALESCE(dv.count, (0)::bigint))::numeric)) + 0.9604))) / (COALESCE((uv.count)::numeric, 0.5) + (COALESCE(dv.count, (0)::bigint))::numeric))) / ((1)::numeric + (3.8416 / (COALESCE((uv.count)::numeric, 0.5) + (COALESCE(dv.count, (0)::bigint))::numeric)))) AS score
-   FROM ((searchableloadouts
-   LEFT JOIN votecount uv ON ((((((uv.type = 1) AND (uv.targettype = 1)) AND (uv.targetid1 = searchableloadouts.loadoutid)) AND (uv.targetid2 IS NULL)) AND (uv.targetid3 IS NULL))))
-   LEFT JOIN votecount dv ON ((((((dv.type = 2) AND (dv.targettype = 1)) AND (dv.targetid1 = searchableloadouts.loadoutid)) AND (dv.targetid2 IS NULL)) AND (dv.targetid3 IS NULL))));
+   FROM ((loadouts l
+   LEFT JOIN votecount uv ON ((((((uv.type = 1) AND (uv.targettype = 1)) AND (uv.targetid1 = l.loadoutid)) AND (uv.targetid2 IS NULL)) AND (uv.targetid3 IS NULL))))
+   LEFT JOIN votecount dv ON ((((((dv.type = 2) AND (dv.targettype = 1)) AND (dv.targetid1 = l.loadoutid)) AND (dv.targetid2 IS NULL)) AND (dv.targetid3 IS NULL))));
 
 
 --
@@ -1033,28 +1015,16 @@ CREATE VIEW loadoutslatestrevision AS
 
 
 --
--- Name: loadoutsmodulelist; Type: VIEW; Schema: osmium; Owner: -
---
-
-CREATE VIEW loadoutsmodulelist AS
- SELECT fittingmodules.fittinghash, 
-    string_agg(DISTINCT (invtypes.typename)::text, ' '::text) AS modulelist
-   FROM (fittingmodules
-   JOIN eve.invtypes ON ((fittingmodules.typeid = invtypes.typeid)))
-  GROUP BY fittingmodules.fittinghash;
-
-
---
 -- Name: loadoutssearchdata; Type: VIEW; Schema: osmium; Owner: -
 --
 
 CREATE VIEW loadoutssearchdata AS
- SELECT searchableloadouts.loadoutid, 
-        CASE loadouts.viewpermission
+ SELECT l.loadoutid, 
+        CASE l.viewpermission
             WHEN 4 THEN accounts.accountid
             ELSE 0
         END AS restrictedtoaccountid, 
-        CASE loadouts.viewpermission
+        CASE l.viewpermission
             WHEN 3 THEN 
             CASE accounts.apiverified
                 WHEN true THEN accounts.corporationid
@@ -1062,7 +1032,7 @@ CREATE VIEW loadoutssearchdata AS
             END
             ELSE 0
         END AS restrictedtocorporationid, 
-        CASE loadouts.viewpermission
+        CASE l.viewpermission
             WHEN 2 THEN 
             CASE accounts.apiverified
                 WHEN true THEN accounts.allianceid
@@ -1070,14 +1040,20 @@ CREATE VIEW loadoutssearchdata AS
             END
             ELSE 0
         END AS restrictedtoallianceid, 
-    fittingaggtags.taglist AS tags, 
-    fittingfittedtypes.typelist AS modules, 
+    ( SELECT fat.taglist
+           FROM fittingaggtags fat
+          WHERE (fat.fittinghash = fittings.fittinghash)) AS tags, 
+    ( SELECT fft.typelist
+           FROM fittingfittedtypes fft
+          WHERE (fft.fittinghash = fittings.fittinghash)) AS modules, 
         CASE accounts.apiverified
             WHEN true THEN accounts.charactername
             ELSE accounts.nickname
         END AS author, 
     fittings.name, 
-    fittingdescriptions.descriptions AS description, 
+    ( SELECT fd.descriptions
+           FROM fittingdescriptions fd
+          WHERE (fd.fittinghash = fittings.fittinghash)) AS description, 
     fittings.hullid AS shipid, 
     invtypes.typename AS ship, 
     fittings.creationdate, 
@@ -1091,21 +1067,18 @@ CREATE VIEW loadoutssearchdata AS
     COALESCE(lda.dps, (0)::double precision) AS dps, 
     COALESCE(lda.ehp, (0)::double precision) AS ehp, 
     COALESCE(lda.estimatedprice, (0)::double precision) AS estimatedprice, 
-    loadouts.viewpermission
-   FROM (((((((((((((searchableloadouts
-   JOIN loadoutslatestrevision ON ((searchableloadouts.loadoutid = loadoutslatestrevision.loadoutid)))
-   JOIN loadouts ON ((loadoutslatestrevision.loadoutid = loadouts.loadoutid)))
-   JOIN accounts ON ((loadouts.accountid = accounts.accountid)))
+    l.viewpermission
+   FROM (((((((((loadouts l
+   JOIN loadoutslatestrevision ON ((l.loadoutid = loadoutslatestrevision.loadoutid)))
+   JOIN accounts ON ((l.accountid = accounts.accountid)))
    JOIN loadouthistory ON (((loadouthistory.loadoutid = loadoutslatestrevision.loadoutid) AND (loadouthistory.revision = loadoutslatestrevision.latestrevision))))
    JOIN fittings ON ((fittings.fittinghash = loadouthistory.fittinghash)))
-   JOIN loadoutscores ls ON ((ls.loadoutid = searchableloadouts.loadoutid)))
+   JOIN loadoutscores ls ON ((ls.loadoutid = l.loadoutid)))
    JOIN eve.invtypes ON ((invtypes.typeid = fittings.hullid)))
-   LEFT JOIN loadoutcommentcount lcc ON ((lcc.loadoutid = searchableloadouts.loadoutid)))
-   LEFT JOIN fittingaggtags ON ((fittingaggtags.fittinghash = loadouthistory.fittinghash)))
-   LEFT JOIN fittingfittedtypes ON ((fittingfittedtypes.fittinghash = loadouthistory.fittinghash)))
-   LEFT JOIN fittingdescriptions ON ((fittingdescriptions.fittinghash = loadouthistory.fittinghash)))
+   LEFT JOIN loadoutcommentcount lcc ON ((lcc.loadoutid = l.loadoutid)))
    LEFT JOIN eve.invgroups ON ((invgroups.groupid = invtypes.groupid)))
-   LEFT JOIN loadoutdogmaattribs lda ON ((lda.loadoutid = searchableloadouts.loadoutid)));
+   LEFT JOIN loadoutdogmaattribs lda ON ((lda.loadoutid = l.loadoutid)))
+  WHERE (l.visibility = 0);
 
 
 --
@@ -1147,7 +1120,9 @@ CREATE VIEW loadoutssearchresults AS
     accounts.alliancename, 
     accounts.allianceid, 
     loadouts.accountid, 
-    fittingaggtags.taglist, 
+    ( SELECT fat.taglist
+           FROM fittingaggtags fat
+          WHERE (fat.fittinghash = fittings.fittinghash)) AS taglist, 
     accounts.reputation, 
     loadoutupdownvotes.votes, 
     loadoutupdownvotes.upvotes, 
@@ -1156,14 +1131,13 @@ CREATE VIEW loadoutssearchresults AS
     lda.dps, 
     lda.ehp, 
     lda.estimatedprice
-   FROM (((((((((loadouts
+   FROM ((((((((loadouts
    JOIN loadoutslatestrevision ON ((loadouts.loadoutid = loadoutslatestrevision.loadoutid)))
    JOIN loadouthistory ON (((loadoutslatestrevision.latestrevision = loadouthistory.revision) AND (loadouthistory.loadoutid = loadouts.loadoutid))))
    JOIN fittings ON ((fittings.fittinghash = loadouthistory.fittinghash)))
    JOIN accounts ON ((accounts.accountid = loadouts.accountid)))
    JOIN eve.invtypes ON ((fittings.hullid = invtypes.typeid)))
    JOIN loadoutupdownvotes ON ((loadoutupdownvotes.loadoutid = loadouts.loadoutid)))
-   LEFT JOIN fittingaggtags ON ((fittingaggtags.fittinghash = loadouthistory.fittinghash)))
    LEFT JOIN loadoutcommentcount lcc ON ((lcc.loadoutid = loadouts.loadoutid)))
    LEFT JOIN loadoutdogmaattribs lda ON ((lda.loadoutid = loadouts.loadoutid)));
 
@@ -1255,6 +1229,24 @@ CREATE TABLE recentkillsdna (
     allianceid integer,
     alliancename character varying(255)
 );
+
+
+--
+-- Name: searchableloadouts; Type: VIEW; Schema: osmium; Owner: -
+--
+
+CREATE VIEW searchableloadouts AS
+         SELECT allowedloadoutsbyaccount.accountid, 
+            allowedloadoutsbyaccount.loadoutid
+           FROM (allowedloadoutsbyaccount
+      JOIN loadouts ON ((allowedloadoutsbyaccount.loadoutid = loadouts.loadoutid)))
+     WHERE ((loadouts.visibility = 0) AND (loadouts.viewpermission <> 0))
+UNION 
+         SELECT 0 AS accountid, 
+            allowedloadoutsanonymous.loadoutid
+           FROM (allowedloadoutsanonymous
+      JOIN loadouts ON ((allowedloadoutsanonymous.loadoutid = loadouts.loadoutid)))
+     WHERE (loadouts.visibility = 0);
 
 
 --

@@ -175,7 +175,7 @@ else {
 
 
 $fresult = array(
-	'header' => "<img src='http://image.eveonline.com/Type/".$typeid."_64.png' alt='' /> "
+	'header' => "<img src='//image.eveonline.com/Type/".$typeid."_64.png' alt='' /> "
 	.\Osmium\Chrome\escape($typename),
 );
 
@@ -269,7 +269,7 @@ if($affectors !== false) {
 	$fresult['affectors_per_type'] = "<ul>\n";
 	foreach($affectors_per_type as $a_typeid => &$a) {
 		$typename = \Osmium\Chrome\escape($a[0][2]);
-		$fresult['affectors_per_type'] .= "<li><img src='http://image.eveonline.com/Type/"
+		$fresult['affectors_per_type'] .= "<li><img src='//image.eveonline.com/Type/"
 			.$a_typeid."_64.png' alt='' /> ".$typename.":\n";
 		$fresult['affectors_per_type'] .= "<ul>\n";
 

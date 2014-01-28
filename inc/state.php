@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -183,8 +183,15 @@ function print_login_or_logout_box($relative, $notifications) {
 
 /** @internal */
 function print_login_box($relative) {
-	echo "<div id='state_box' class='login'>\n"
-		."<form method='post' action='{$relative}/login'>\n"
+	echo "<div id='state_box' class='login'>\n";
+
+	if(\Osmium\get_ini_setting('https_available')
+	   && !\Osmium\HTTPS
+	   && \Osmium\get_ini_setting('prefer_secure_login')) {
+		$relative = rtrim('https://'.$_SERVER['HTTP_HOST'].\Osmium\get_ini_setting('relative_path'), '/');
+	}
+
+	echo "<form method='post' action='{$relative}/login'>\n"
 		."<p>\n<span class='wide'>\n<input type='text' name='account_name' placeholder='Account name' />\n"
 		."<input type='password' name='password' placeholder='Password' />\n"
 		."<input type='submit' name='__osmium_login' value='Login' />"
@@ -206,14 +213,13 @@ function print_logoff_box($relative, $notifications) {
 	if(isset($a['apiverified']) && $a['apiverified'] === 't' &&
 	   isset($a['characterid']) && $a['characterid'] > 0) {
 		$id = $a['characterid'];
-		$portrait = "<img src='http://image.eveonline.com/Character/${id}_128.jpg' alt='' class='portrait' /> ";
+		$portrait = "<img src='//image.eveonline.com/Character/${id}_128.jpg' alt='' class='portrait' /> ";
 	}
 
 	echo "<div id='state_box' class='logout'>\n<p>\n"
 		."<span class='wide'>Logged in as </span>$portrait<strong>"
 		.\Osmium\Chrome\format_character_name($a, $relative)
-		."</strong> (<a class='rep' href='$relative/profile/"
-		.$a['accountid']."#reputation'>"
+		."</strong> (<a class='rep' href='$relative/privileges'>"
 		.\Osmium\Chrome\format_reputation(\Osmium\Reputation\get_current_reputation())
 		."</a>). <a id='ncount' data-count='$notifications' href='$relative/notifications'"
 		." title='$notifications new notification(s)'>$notifications</a>"
@@ -501,6 +507,16 @@ function check_api_key($a, $initial = false, $timeout = null) {
 		isfittingmanager = false, apiverified = false
 		WHERE accountid = $1', array($a['accountid']));
 
+		if(!$initial && $a['apiverified'] == 't') {
+			/* Notify the user his API key broke down without user intervention */
+			\Osmium\Notification\add_notification(
+				\Osmium\Notification\NOTIFICATION_TYPE_ACCOUNT_API_KEY_DISABLED,
+				null,
+				$a['accountid'],
+				$key_id
+			);
+		}
+
 		$a['characterid'] = null;
 		$a['charactername'] = null;
 		$a['corporationid'] = null;
@@ -761,3 +777,27 @@ function put_activity() {
 	if($a !== 'CLI') put_cache_memory($a, 0, 65, 'Activity_');
 }
 
+/**
+ * Redirect user to login form (which will redirect to the current
+ * page) if not currently logged in.
+ */
+function assume_logged_in($relative) {
+	if(is_logged_in()) return;
+
+	/* TODO: also transfer current postdata */
+
+	header('HTTP/1.1 303 See Other', true, 303);
+	header('Location: '.$relative.'/login?r='.urlencode($_SERVER['REQUEST_URI']), true, 303);
+	die();
+}
+
+/**
+ * Redirect user to main page if logged in.
+ */
+function assume_logged_out($relative) {
+	if(!is_logged_in()) return;
+
+	header('HTTP/1.1 303 See Other', true, 303);
+	header('Location: '.$relative.'/', true, 303);
+	die();
+}

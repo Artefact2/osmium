@@ -21,13 +21,13 @@ namespace Osmium\Page\ViewProfile;
 require __DIR__.'/../inc/root.php';
 
 if(!isset($_GET['accountid'])) {
-	\Osmium\fatal(404, 'No accountid given.');
+	\Osmium\fatal(404);
 }
 
 $row = \Osmium\Db\fetch_assoc(\Osmium\Db\query_params('SELECT accountid, creationdate, lastlogindate, apiverified, nickname, characterid, charactername, corporationid, corporationname, allianceid, alliancename, ismoderator, flagweight, reputation FROM osmium.accounts WHERE accountid = $1', array($_GET['accountid'])));
 
 if($row === false) {
-	\Osmium\fatal(404, 'Invalid accountid.');
+	\Osmium\fatal(404);
 }
 
 $a = \Osmium\State\get_state('a', array());
@@ -51,13 +51,13 @@ if($row['apiverified'] === 't') {
 
 	echo "<p>\n"
 		."<a href='../search?q=".urlencode("@restrictedtoaccountid > 0")."'>"
-		."<img src='http://image.eveonline.com/Character/".$row['characterid']."_512.jpg' alt='portrait' />"
+		."<img src='//image.eveonline.com/Character/".$row['characterid']."_512.jpg' alt='portrait' />"
 		."</a><br />\n"
 		."<a href='../search?q=".urlencode("@restrictedtocorporationid > 0")."'>"
-		."<img src='http://image.eveonline.com/Corporation/".$row['corporationid']."_256.png'"
+		."<img src='//image.eveonline.com/Corporation/".$row['corporationid']."_256.png'"
 		." alt='corporation logo' title='".\Osmium\Chrome\escape($row['corporationname'])."' /></a>"
 		."<a href='../search?q=".urlencode("@restrictedtoallianceid > 0")."'>"
-		."<img src='http://image.eveonline.com/Alliance/".$allianceid."_128.png'"
+		."<img src='//image.eveonline.com/Alliance/".$allianceid."_128.png'"
 		." alt='alliance logo' title='".\Osmium\Chrome\escape($alliancename)."' /></a></p>\n";
 }
 
@@ -72,7 +72,12 @@ echo "<tr>\n<th rowspan='2'>visits</th>\n<td>member for</td>\n<td>".\Osmium\Chro
 
 echo $sep;
 
-echo "<tr>\n<th rowspan='2'>meta</th>\n<td>api key verified</td>\n<td>".(($row['apiverified'] === 't') ? 'yes' : 'no')."</td>\n</tr>\n<tr>\n<td>reputation score</td>\n<td>".number_format($row['reputation'])."</td>\n</tr>\n";
+echo "<tr>\n<th rowspan='2'>meta</th>\n<td>api key verified</td>\n<td>".(($row['apiverified'] === 't') ? 'yes' : 'no')."</td>\n</tr>\n";
+echo "<tr>\n<td>reputation score</td>\n<td>".number_format($row['reputation']);
+if($myprofile) {
+	echo " <a href='../privileges'>(check my privileges)</a>";
+}
+echo "</td>\n</tr>\n";
 
 if($myprofile || $ismoderator) {
 	echo $sep;

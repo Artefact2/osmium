@@ -20,10 +20,7 @@ namespace Osmium\Page\EditComment;
 
 require __DIR__.'/../inc/root.php';
 
-if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "Forbidden.");
-}
-
+\Osmium\State\assume_logged_in('..');
 $a = \Osmium\State\get_state('a');
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
@@ -31,11 +28,11 @@ if($_GET['type'] == 'comment') {
 	$comment = \Osmium\Db\fetch_assoc(\Osmium\Db\query_params('SELECT commentbody, accountid, loadoutid, latestrevision FROM osmium.loadoutcommentslatestrevision AS lclr JOIN osmium.loadoutcommentrevisions AS lcr ON lcr.commentid = lclr.commentid AND lcr.revision = lclr.latestrevision JOIN osmium.loadoutcomments lc ON lc.commentid = lclr.commentid WHERE lclr.commentid = $1', array($id)));
 	
 	if($comment === false) {
-		\Osmium\fatal(404, "Comment not found.");
+		\Osmium\fatal(404);
 	}
 	
 	if($a['ismoderator'] !== 't' && $a['accountid'] != $comment['accountid']) {
-		\Osmium\fatal(403, "You can't edit that comment.");
+		\Osmium\fatal(403);
 	}
 	
 	$body = $comment['commentbody'];
@@ -44,17 +41,17 @@ if($_GET['type'] == 'comment') {
 	$reply = \Osmium\Db\fetch_assoc(\Osmium\Db\query_params('SELECT replybody, accountid, commentid FROM osmium.loadoutcommentreplies WHERE commentreplyid = $1', array($id)));
 
 	if($reply === false) {
-		\Osmium\fatal(404, "Comment reply not found.");
+		\Osmium\fatal(404);
 	}
 
 	if($a['ismoderator'] !== 't' && $a['accountid'] != $reply['accountid']) {
-		\Osmium\fatal(403, "You can't edit that comment reply.");
+		\Osmium\fatal(403);
 	}
 
 	$body = $reply['replybody'];
 	$ftype = 'Comment reply';
 } else {
-	\Osmium\fatal(404, "Invalid type.");
+	\Osmium\fatal(400);
 }
 
 if(isset($_POST['body'])) {

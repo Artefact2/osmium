@@ -20,6 +20,13 @@ namespace Osmium\ViewLoadout;
 
 echo "<h2>Comments</h2>\n";
 
+$cancomment = !\Osmium\Reputation\is_fit_public($fit) || \Osmium\Reputation\has_privilege(
+	\Osmium\Reputation\PRIVILEGE_COMMENT_LOADOUT
+) || (isset($author['accountid']) && isset($a['accountid']) && $a['accountid'] == $author['accountid']);
+$canreply = !\Osmium\Reputation\is_fit_public($fit) || \Osmium\Reputation\has_privilege(
+	\Osmium\Reputation\PRIVILEGE_REPLY_TO_COMMENTS
+);
+
 if($commentcount === 0) {
 	echo "<p class='placeholder'>This loadout has no comments.</p>\n";
 	goto addcomment; /* Yeah, this isn't very cool, but it avoid
@@ -122,7 +129,7 @@ function format_comment($row) {
 
 	echo "<header>\n<div class='author'>\n";
 	if($row['apiverified'] === 't' && $row['characterid'] > 0) {
-		echo "<img class='portrait' src='http://image.eveonline.com/Character/"
+		echo "<img class='portrait' src='//image.eveonline.com/Character/"
 			.$row['characterid']."_256.jpg' alt='' />";
 	}
 	echo "<small>commented by</small><br />\n";
@@ -131,15 +138,15 @@ function format_comment($row) {
 		.\Osmium\Chrome\format_relative_date($row['creationdate'])."\n";
 	echo "</div>\n<div class='meta'>\n";
 	echo "<a href='?jtc=".$row['commentid']."' title='permanent link'>#</a>";
+	if($isflaggable) {
+		echo " — <a class='dangerous' href='".RELATIVE."/flagcomment/"
+			.$row['commentid']."' title='This comment requires moderator attention'>⚑</a>";
+	}
 	if($ismoderator || ($loggedin && $row['accountid'] == $a['accountid'])) {
 		$tmp = ($loggedin && $row['accountid'] == $a['accountid']) ? '' : $modprefix;
 
 		echo " — <a href='".RELATIVE."/editcomment/".$row['commentid']."'>{$tmp}edit</a>";
 		echo " — <a href='".RELATIVE."/deletecomment/".$row['commentid']."?tok=".\Osmium\State\get_token()."' class='dangerous confirm'>{$tmp}delete</a>";
-	}
-	if($isflaggable) {
-		echo " — <a class='dangerous' href='".RELATIVE."/flagcomment/"
-			.$row['commentid']."' title='This comment requires moderator attention'>flag</a>";
 	}
 	if($row['loadoutrevision'] < $fit['metadata']['revision']) {
 		echo "<br />\n<span class='outdated'>(this comment applies to a previous revision of this loadout:";
@@ -153,10 +160,13 @@ function format_comment($row) {
 	echo "</div>\n</header>\n<ul id='creplies".$row['commentid']."' class='replies'>\n";
 }
 
-function format_comment_end($commentid) {
-	global $loggedin, $commentsallowed;
+function format_comment_end($row) {
+	global $loggedin, $commentsallowed, $canreply, $a;
 
-	if($loggedin && $commentsallowed) {
+	$commentid = $row['commentid'];
+	$commentauthorid = $row['accountid'];
+
+	if($loggedin && $commentsallowed && ($canreply || $commentauthorid == $a['accountid'])) {
 		echo "<li class='new'>\n";
 		echo "<form method='post' action='#creplies".$commentid."' accept-charset='utf-8'>\n";
 		echo "<textarea name='replybody' placeholder='Type your reply… (Markdown and some HTML allowed, basic formatting only)'></textarea>\n";
@@ -166,7 +176,7 @@ function format_comment_end($commentid) {
 	}
 
 	echo "</ul>\n";
-	if($loggedin) {
+	if($loggedin && $commentsallowed && ($canreply || $commentauthorid == $a['accountid'])) {
 		echo "<a class='add_comment'>reply to this comment</a>\n";
 	}
 	echo "</div>\n";
@@ -196,27 +206,29 @@ function format_comment_reply($row) {
 
 	echo " — ".\Osmium\Chrome\format_relative_date($row['repcreationdate'])."\n";
 	echo "<span class='meta'>\n— <a href='?jtr=".$row['commentreplyid']."' title='permament link'>#</a>";
+	if($isflaggable) {
+		echo " — <a class='dangerous' href='".RELATIVE."/flagcommentreply/"
+			.$row['commentreplyid']."' title='This comment reply requires moderator attention'>⚑</a>\n";
+	}
 	if($ismoderator || ($loggedin && $row['raccountid'] == $a['accountid'])) {
 		$tmp = ($loggedin && $row['raccountid'] == $a['accountid']) ? '' : $modprefix;
 
 		echo " — <a href='".RELATIVE."/editcommentreply/".$row['commentreplyid']."'>{$tmp}edit</a>\n";
 		echo " — <a href='".RELATIVE."/deletecommentreply/".$row['commentreplyid']."?tok=".\Osmium\State\get_token()."' class='dangerous confirm'>{$tmp}delete</a>\n";
 	}
-	if($isflaggable) {
-		echo " — <a class='dangerous' href='".RELATIVE."/flagcommentreply/"
-			.$row['commentreplyid']."' title='This comment reply requires moderator attention'>flag</a>\n";
-	}
 	echo "</span>\n</li>\n";
 }
 
 $prevcid = null;
+$prevrow = null;
 while($row = \Osmium\Db\fetch_assoc($cq)) {
 	if($row['commentid'] !== $prevcid) {
 		if($prevcid !== null) {
-			format_comment_end($prevcid);
+			format_comment_end($prevrow);
 		}
 		format_comment($row);
 		$prevcid = $row['commentid'];
+		$prevrow = $row;
 	}
 
 	if($row['commentreplyid'] !== null) {
@@ -224,13 +236,13 @@ while($row = \Osmium\Db\fetch_assoc($cq)) {
 	}
 }
 if($prevcid !== null) {
-	format_comment_end($prevcid);
+	format_comment_end($prevrow);
 }
 
 addcomment:
 echo "<h2>Add a comment</h2>\n";
 
-if($commentsallowed && $loggedin) {
+if($commentsallowed && $loggedin && $cancomment) {
 	\Osmium\Forms\print_form_begin(\Osmium\Chrome\escape($_SERVER['REQUEST_URI']).'#comments');
 	\Osmium\Forms\print_textarea(
 		'Comment body<br /><small>(Markdown and some HTML allowed)</small>',
@@ -238,6 +250,8 @@ if($commentsallowed && $loggedin) {
 		'commentbody');
 	\Osmium\Forms\print_submit('Submit comment');
 	\Osmium\Forms\print_form_end();
+} else if($loggedin && $commentsallowed) {
+	echo "<p class='placeholder'>You don't have the necessary privilege to comment this loadout.</p>\n";
 } else if(!$loggedin && $commentsallowed) {
 	echo "<p class='placeholder'>You have to log in to comment on this loadout.</p>\n";
 } else if(!$commentsallowed) {

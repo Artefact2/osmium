@@ -20,7 +20,12 @@ namespace Osmium\Page\Login;
 
 require __DIR__.'/../inc/root.php';
 
-$redirect = isset($_POST['request_uri']) ? $_POST['request_uri'] : './';
+$redirect = isset($_POST['request_uri']) ? $_POST['request_uri'] : (isset($_GET['r']) ? $_GET['r'] : './');
+
+if(\Osmium\State\is_logged_in()) {
+	header('Location: '.$redirect, true, 303);
+	die();
+}
 
 if(isset($_POST['__osmium_login'])) {
 	if(($errormsg = \Osmium\State\try_login()) === true) {
@@ -36,13 +41,14 @@ if(isset($_POST['__osmium_login'])) {
 
 echo "<h1>Login</h1>\n";
 
-if(\Osmium\State\is_logged_in()) {
-	echo "<p>You are already logged in. You may want to logout first.</p>\n";
-	\Osmium\Chrome\print_footer();
-	die();
-}
+require \Osmium\ROOT.'/inc/login-httpscheck.php';
 
 \Osmium\Forms\print_form_begin();
+
+if(isset($_GET['r'])) {
+	echo "<tr class='error_message'><td colspan='2'><p>You need to log in to access <strong>".\Osmium\Chrome\escape($_GET['r'])."</strong>.</p></td></tr>\n";
+}
+
 \Osmium\Forms\print_generic_field(
 	'Account name', 'text', 'account_name', null, 
 	\Osmium\Forms\FIELD_REMEMBER_VALUE

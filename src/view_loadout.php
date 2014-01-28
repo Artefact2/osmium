@@ -121,7 +121,7 @@ foreach(array('', 'charge', 'drone') as $ptype) {
 	if(isset($_GET[$ptype.'preset']) && $_GET[$ptype.'preset'] !== '') {
 		$p = intval($_GET[$ptype.'preset']);
 		if(!isset($fit[$ptype.'presets'][$p])) {
-			\Osmium\Fatal(400, "Invalid ".$ptype." preset");
+			\Osmium\Fatal(404, "Invalid ".$ptype." preset");
 		}
 		call_user_func_array(
 			'Osmium\Fit\use_'.$ptype.($ptype ? '_' : '').'preset',
@@ -157,10 +157,21 @@ if($revision_overridden) {
 echo "<h1 id='vltitle'>Viewing loadout: <strong class='fitname'>"
 .\Osmium\Chrome\escape($fit['metadata']['name'])."</strong>";
 
-if(count($fit['metadata']['tags']) > 0) {
+$canretag = ($revision_overridden === false)
+	&& isset($a['accountid']) && isset($author['accountid'])
+	&& ($a['accountid'] == $author['accountid'] || (
+		\Osmium\Reputation\is_fit_public($fit) && \Osmium\Reputation\has_privilege(
+			\Osmium\Reputation\PRIVILEGE_RETAG_LOADOUTS
+		)
+	));
+
+if(count($fit['metadata']['tags']) > 0 || $canretag) {
 	echo "\n<ul class='tags'>\n";
 	foreach($fit['metadata']['tags'] as $tag) {
 		echo "<li><a href='".RELATIVE."/search?q=".urlencode('@tags '.$tag)."'>$tag</a></li>\n";
+	}
+	if($canretag) {
+		echo "<li class='retag'><a><small>✎ Edit tags</small></a></li>";
 	}
 	echo "</ul>\n";
 }
@@ -195,7 +206,7 @@ echo "<div id='vlattribs'>
 if(isset($fit['ship']['typeid'])) {
 	echo "<img src='//image.eveonline.com/Render/".$fit['ship']['typeid']."_256.png' alt='' />\n";
 	echo "<small class='groupname'>".\Osmium\Chrome\escape($groupname)."</small>\n";
-	echo "<strong>".\Osmium\Chrome\escape($fit['ship']['typename'])."</strong>\n";
+	echo "<strong><span class='name'>".\Osmium\Chrome\escape($fit['ship']['typename'])."</span></strong>\n";
 } else {
 	echo "<div class='notype'></div>\n";
 	echo "<small class='groupname'></small>\n";
@@ -237,12 +248,12 @@ if($loadoutid !== false) {
 	echo "<div class='author'>\n";
 	if($author['apiverified'] === 't') {
 		if($author['allianceid'] > 0) {
-			echo "<img class='alliance' src='http://image.eveonline.com/Alliance/".$author['allianceid']."_128.png' alt='' title='member of ".\Osmium\Chrome\escape($author['alliancename'])."' />";
+			echo "<img class='alliance' src='//image.eveonline.com/Alliance/".$author['allianceid']."_128.png' alt='' title='member of ".\Osmium\Chrome\escape($author['alliancename'])."' />";
 		} else {
-			echo "<img class='corporation' src='http://image.eveonline.com/Corporation/".$author['corporationid']."_256.png' alt='' title='member of ".\Osmium\Chrome\escape($author['corporationname'])."' />";
+			echo "<img class='corporation' src='//image.eveonline.com/Corporation/".$author['corporationid']."_256.png' alt='' title='member of ".\Osmium\Chrome\escape($author['corporationname'])."' />";
 		}
 		if($author['characterid'] > 0) {
-			echo "<img class='portrait' src='http://image.eveonline.com/Character/".$author['characterid']."_256.jpg' alt='' />";
+			echo "<img class='portrait' src='//image.eveonline.com/Character/".$author['characterid']."_256.jpg' alt='' />";
 		}
 	}
 	echo "<small>submitted by</small><br />\n";
@@ -279,8 +290,13 @@ echo "</div>
 
 
 
-echo "<div id='vlmain'>
-<ul class='tabs'>
+echo "<div id='vlmain'>\n";
+
+if($revision_overridden && isset($lastrev['updatedate'])) {
+	echo "<p class='notice_box'>You are viewing revision {$revision} of this loadout, as it was published the ".date('Y-m-d \a\t H:i', $lastrev['updatedate']).". <a href='".RELATIVE."/".\Osmium\Fit\get_fit_uri($loadoutid, $fit['metadata']['visibility'], $fit['metadata']['privatetoken'])."'>Link to the latest revision.</a></p>";
+}
+
+echo "<ul class='tabs'>
 <li><a href='#loadout'>Loadout</a></li>
 <li><a href='#presets'>Presets (".(max(count($fit['presets']), count($fit['chargepresets']), count($fit['dronepresets']))).")</a></li>
 <li><a href='#remote'>Remote (".
@@ -362,7 +378,7 @@ foreach($stypes as $type => $tdata) {
 			.$type."' data-index='".$index."' data-state='".$s[2]."' data-chargetypeid='"
 			.($c === null ? 'null' : $c['typeid'])."'>\n";
 		echo "<img src='//image.eveonline.com/Type/".$m['typeid']."_64.png' alt='' />";
-		echo \Osmium\Chrome\escape($m['typename'])."\n";
+		echo "<span class='name'>".\Osmium\Chrome\escape($m['typename'])."</span>\n";
 
 		if($c !== null) {
 			dogma_get_number_of_module_cycles_before_reload(
@@ -466,7 +482,7 @@ foreach(array('space' => 'Drones in space', 'bay' => 'Drones in bay') as $k => $
 
 		echo "<li{$class} data-typeid='".$typeid."' data-location='".$k."' data-quantity='".$qty."'>";
 		echo "<img src='//image.eveonline.com/Type/".$typeid."_64.png' alt='' />";
-		echo "<strong class='qty'>".$qty."×</strong>".$d['typename'];
+		echo "<strong class='qty'>".$qty."×</strong><span class='name'>".$d['typename']."</span>";
 		echo $attribs;
 		echo "</li>\n";
 	}
@@ -505,7 +521,7 @@ foreach(array('implants' => $implants, 'boosters' => $boosters) as $k => $imps) 
 
 	foreach($imps as $i) {
 		echo "<li><img src='//image.eveonline.com/Type/".$i['typeid']."_64.png' alt='' />"
-			.\Osmium\Chrome\escape($i['typename'])
+			."<span class='name'>".\Osmium\Chrome\escape($i['typename'])."</span>"
 			.'<span class="slot">, '.substr($k, 0, -1).' slot '.$i['slot'].'</span>'
 			."</li>\n";
 	}

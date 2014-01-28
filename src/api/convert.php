@@ -20,14 +20,8 @@ namespace Osmium\Api\Convert;
 
 require __DIR__.'/../../inc/root.php';
 
-function fatal($code, $message) {
-	http_response_code($code);
-	header('Content-Type: text/plain');
-	die($message);
-}
-
 if(!isset($_GET['source_fmt']) || !isset($_GET['target_fmt'])) {
-	fatal(400, "Must provide source_fmt and target_fmt.");
+	\Osmium\fatal(400, "Must provide source_fmt and target_fmt.");
 }
 
 $src = $_GET['source_fmt'];
@@ -37,7 +31,7 @@ $available_export_formats = \Osmium\Fit\get_export_formats();
 $available_import_formats = \Osmium\Fit\get_import_formats();
 
 if(!isset($available_export_formats[$tgt])) {
-	fatal(400, "Export format unavailable.");
+	\Osmium\fatal(400, "Export format unavailable.");
 }
 
 $fit = false;
@@ -47,7 +41,7 @@ if(is_numeric($src)) {
 	$loadoutid = (int)$src;
 
 	if(!\Osmium\State\can_view_fit($loadoutid)) {
-		fatal(404, "Loadout not found.");
+		\Osmium\fatal(404);
 	}
 
 	$rev = null;
@@ -55,18 +49,18 @@ if(is_numeric($src)) {
 	$fit = \Osmium\Fit\get_fit($loadoutid, $rev);
 
 	if($fit === false) {
-		fatal(400, "get_fit() returned false, invalid revision specified?");
+		\Osmium\fatal(404);
 	}
 
 	if(!\Osmium\State\can_access_fit($fit)) {
-		fatal(403, "Can't access loadout, password-protected?");
+		\Osmium\fatal(403);
 	}
 
 	if(isset($_GET['remote'])) {
 		$key = $_GET['remote'];
 
 		if($key !== 'local' && !isset($fit['remote'][$key])) {
-			fatal(404, "No such remote.");
+			\Osmium\fatal(404);
 		}
 
 		\Osmium\Fit\set_local($fit, $key);
@@ -77,7 +71,7 @@ if(is_numeric($src)) {
 
 		if(!isset($fit['fleet'][$t]) || !isset($fit['fleet'][$t]['ship']['typeid'])
 		|| !$fit['fleet'][$t]['ship']['typeid']) {
-			fatal(404, "No such fleet booster.");
+			\Osmium\fatal(404);
 		}
 
 		$fit = $fit['fleet'][$t];
@@ -88,17 +82,17 @@ if(is_numeric($src)) {
 	} else if(isset($_GET['input'])) {
 		$input = $_GET['input'];
 	} else {
-		fatal(400, "No input specified. Send data using the input GET or POST parameter.");
+		\Osmium\fatal(400, "No input specified. Send data using the input GET or POST parameter.");
 	}
 
 	$errors = array();
 	if(!isset($available_import_formats[$src])) {
-		fatal(400, "Import format unavailable.");
+		\Osmium\fatal(400, "Import format unavailable.");
 	}
 	$fits = $available_import_formats[$src][2]($input, $errors);
 
 	if($fits === false || $fits === array() || $fits[0] === false) {
-		fatal(400, implode("\n", $errors));
+		\Osmium\fatal(400, "<pre>".implode("\n", $errors)."</pre>");
 	}
 
 	$fit = $fits[0];
@@ -108,7 +102,7 @@ if(isset($_GET['preset'])) {
 	if(isset($fit['presets'][$_GET['preset']])) {
 		\Osmium\Fit\use_preset($fit, $_GET['preset']);
 	} else {
-		fatal(400, "Nonexistent preset specified.");
+		\Osmium\fatal(404, "Nonexistent preset specified.");
 	}
 }
 
@@ -116,7 +110,7 @@ if(isset($_GET['chargepreset'])) {
 	if(isset($fit['chargepresets'][$_GET['chargepreset']])) {
 		\Osmium\Fit\use_charge_preset($fit, $_GET['chargepreset']);
 	} else {
-		fatal(400, "Nonexistent charge preset specified.");
+		\Osmium\fatal(404, "Nonexistent charge preset specified.");
 	}
 }
 
@@ -124,7 +118,7 @@ if(isset($_GET['dronepreset'])) {
 	if(isset($fit['dronepresets'][$_GET['dronepreset']])) {
 		\Osmium\Fit\use_drone_preset($fit, $_GET['dronepreset']);
 	} else {
-		fatal(400, "Nonexistent drone preset specified.");
+		\Osmium\fatal(404, "Nonexistent drone preset specified.");
 	}
 }
 

@@ -121,6 +121,7 @@ div.mainpcont > section {
 				padding: 0.25em;
 				padding-left: 0;
 				vertical-align: top;
+				border-radius: 0.5em;
 
 				img.abs {
 					overflow: hidden;
@@ -231,7 +232,7 @@ div.mainpcont > section {
 			}
 
 			&:nth-child(4n), &:nth-child(4n+1) {
-				background-color: $main-bg-color;
+				background-color: transparent;
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@ $(function() {
 	osmium_load_common_data();
 	osmium_shortlist = $("div#osmium-data").data('shortlist');
 
-	$('div#nlsources > ul.tabs, div#nlmain > ul.tabs').each(function() {
+	$('div#nlsources > ul.tabs').each(function() {
 		osmium_tabify($(this), 0);
 	});
 
@@ -27,15 +27,17 @@ $(function() {
 		osmium_gen();
 		osmium_init();
 
+		osmium_tabify($('div#nlmain > ul.tabs'), 0);
+
 		/* Fetch computed attributes, etc. */
 		osmium_commit_clf();
 
 		/* Everything done from now on is user initiated */
-		osmium_user_initiated_push(true);
+		 osmium_user_initiated_push(true);
 
-		osmium_undo_push();
-	});
-});
+		 osmium_undo_push();
+	 });
+ });
 
 osmium_loadout_readonly = false;
 osmium_clftype = 'new';

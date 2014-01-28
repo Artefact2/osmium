@@ -92,8 +92,8 @@ $hidden-char: '\0025B8';
 
 	&> a.toggle_state {
 		position: absolute;
-		top: 16px;
-		left: 16px;
+		top: 20px;
+		left: 20px;
 
 		&, &> img, &> span.mainsprite {
 			line-height: 16px;
@@ -348,6 +348,29 @@ div#computed_attributes > section#engineering {
 	}
 }
 
+div#computed_attributes > section#mastery > div {
+	&> ul > li {
+		margin-bottom: 0.5em;
+
+		&> div.reqs {
+			font-size: 0.8em;
+			opacity: 0.5;
+			padding-left: 1em;
+		}
+	}
+
+	&> h5 {
+		margin: 0.5em;
+		font-size: 1em;
+
+		margin-top: 1.5em;
+
+		&:first-child {
+			margin-top: 0.5em;
+		}
+	}
+}
+
 ul.showinfotabs {
 	@include tabs;
 	text-align: left;
@@ -562,4 +585,10 @@ span#clfspinner.spinner {
 	right: 0.25em;
 	bottom: 0.75em;
 	z-index: 1000;
+}
+
+section#modules, section#drones, section#ship, section#implants {
+	& span.name.missingskill {
+		color: $missing-skill-text-color;
+	}
 }

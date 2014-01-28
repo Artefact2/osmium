@@ -199,6 +199,11 @@ div#nlsources > section li.module {
 	@include module;
 }
 
+div#nlsources > section {
+	position: relative;
+	overflow: hidden;
+}
+
 div#nlattribs > section#control {
 	text-align: center;
 	margin: 1em;
@@ -361,9 +366,6 @@ section#remote > section#projected {
 			background-color: rgba($main-bg-color, 0.2);
 
 			&> img.render {
-				position: absolute;
-				top: 0;
-				left: 0;
 				width: 100%;
 				height: 100%;
 				border-radius: 50%;

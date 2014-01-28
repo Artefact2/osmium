@@ -20,13 +20,10 @@ namespace Osmium\Page\Moderation\Main;
 
 require __DIR__.'/../../inc/root.php';
 
-if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "Please login first.");
-}
-
+\Osmium\State\assume_logged_in('..');
 $a = \Osmium\State\get_state('a');
 if($a['ismoderator'] !== 't') {
-	\Osmium\fatal(403, "This page is only for moderators.");
+	\Osmium\fatal(404);
 }
 
 \Osmium\Chrome\print_header('Moderation index', '..');

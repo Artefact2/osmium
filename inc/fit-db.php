@@ -1,6 +1,7 @@
 <?php
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -571,6 +572,14 @@ function commit_fitting(&$fit, &$error = null) {
  * @returns false on failure
  */
 function commit_loadout(&$fit, $ownerid, $accountid, &$error = null) {
+	if(\Osmium\Reputation\is_fit_public($fit)
+	   && !\Osmium\Reputation\has_privilege(
+		   \Osmium\Reputation\PRIVILEGE_CREATE_LOADOUT, $accountid)
+	) {
+		$error = 'You lack the privilege to commit public loadouts.';
+		return false;
+	}
+
 	\Osmium\Db\query('BEGIN;');
 
 	$ret = commit_fitting($fit, $error);
@@ -630,6 +639,30 @@ function commit_loadout(&$fit, $ownerid, $accountid, &$error = null) {
 			$error = \Osmium\Db\last_error();
 			\Osmium\Db\query('ROLLBACK;');
 			return false;
+		}
+
+		if(!\Osmium\Reputation\is_fit_public($fit)) {
+			/* Remove reputation changes */
+			$cq = \Osmium\Db\query_params(
+				'SELECT commentid FROM loadoutcomments lc WHERE lc.loadoutid = $1',
+				array($loadoutid)
+			);
+			while($row = \Osmium\Db\fetch_row($cq)) {
+				\Osmium\Reputation\nullify_votes(
+					'targettype = $1 AND targetid1 = $2 AND targetid2 = $3 AND targetid3 IS NULL',
+					array(
+						\Osmium\Reputation\VOTE_TARGET_TYPE_COMMENT,
+						$row[0], $loadoutid,
+					)
+				);
+			}
+			\Osmium\Reputation\nullify_votes(
+				'targettype = $1 AND targetid1 = $2',
+				array(
+					\Osmium\Reputation\VOTE_TARGET_TYPE_LOADOUT,
+					$loadoutid
+				)
+			);
 		}
 	}
 
@@ -1063,7 +1096,7 @@ function get_fit($loadoutid, $revision = null) {
 
 	$cache = \Osmium\State\get_cache('loadout-'.$loadoutid.'-'.$revision, null, 'Loadout_Cache_');
 	if($cache !== null) {
-		\Osmium\Dogma\semaphore_release($sem);
+		\Osmium\State\semaphore_release($sem);
 		return $cache;
 	}
 
@@ -1207,4 +1240,76 @@ function get_available_skillset_names_for_account() {
 	}
 
 	return $names;
+}
+
+/**
+ * Takes in an array of item/module type IDs; fills the $result array with entries like:
+ *     input_type_id => array(
+ *         skill_type_id => required_level,
+ *         ...
+ *     )
+ */
+function get_skill_prerequisites_for_types(array $types, array &$result) {
+	foreach ($types as $typeid) {
+		if(!isset($result[$typeid])) {
+			$result[$typeid] = [];
+		}
+
+		foreach(get_required_skills($typeid) as $stid => $slevel) {
+			if(!isset($result[$stid])) {
+				get_skill_prerequisites_for_types([ $stid ], $result);
+			}
+
+			$result[$typeid][$stid] = $slevel;
+		}
+	}
+}
+
+function get_skill_prerequisites_and_missing_prerequisites($fit) {
+	$types = array();
+
+	if (!empty($fit['ship'])) {
+		$types[$fit['ship']['typeid']] = true;
+	}
+
+	foreach ($fit['modules'] as $type => $by_index) {
+		foreach ($by_index as $idx => $module) {
+			$types[$module['typeid']] = true;
+
+			if(isset($fit['charges'][$type][$idx]['typeid'])) {
+				$types[$fit['charges'][$type][$idx]['typeid']] = true;
+			}
+		}
+	}
+
+	foreach($fit['drones'] as $typeid => $drone) {
+		if($drone['quantityinspace'] + $drone['quantityinbay'] > 0) {
+			$types[$typeid] = true;
+		}
+	}
+
+	foreach($fit['implants'] as $typeid => $i) {
+		$types[$typeid] = true;
+	}
+
+	$types = array_keys($types);
+	$prereqs = $missing = array();
+
+	get_skill_prerequisites_for_types($types, $prereqs);
+
+	foreach($types as $tid) {
+		if(!isset($prereqs[$tid])) continue;
+
+		foreach($prereqs[$tid] as $stid => $level) {
+			$current = isset($fit['skillset']['override'][$stid])
+				? $fit['skillset']['override'][$stid] : $fit['skillset']['default'];
+
+			if($current < $level) {
+				$missing[$tid] = 1;
+				break;
+			}
+		}
+	}
+
+	return [ $prereqs, $missing ];
 }

@@ -1,5 +1,5 @@
 /* Osmium
- * Copyright (C) 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,11 +37,12 @@ osmium_gen_implants = function() {
 			img.prop('src', '//image.eveonline.com/Type/' + t + '_64.png');
 			img.prop('alt', '');
 
-			li.text(imp[1]);
+			li.append($(document.createElement('span')).addClass('name').text(imp[1]));
 			li.prop('title', imp[1]);
 			li.prepend(img);
 			span.text(', implant slot ' + imp[3]).addClass('slot');
 			li.append(span);
+			li.data('typeid', t);
 
 			osmium_ctxmenu_bind(li, (function(li, t) {
 				return function() {
@@ -69,6 +70,8 @@ osmium_gen_implants = function() {
 						}, { 'default': true });
 
 						osmium_ctxmenu_add_separator(menu);
+
+						osmium_add_generic_browse_mg(menu, t);
 					}
 
 					osmium_ctxmenu_add_option(menu, "Show implant info", function() {

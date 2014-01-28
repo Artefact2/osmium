@@ -1,3 +1,26 @@
+staging
+=======
+
+The [https] section has been added to config.ini. Please copy the
+[https] section from the example file, adapt it to your liking and put
+it in your configuration file.
+
+The tolerate_errors setting has been added to [osmium] in
+config.ini. It is recommended to leave it to On in production
+environments.
+
+The osmium schema has been updated.
+
+The sphinx loadout index has been updated. You must:
+
+* stop sphinx-searchd;
+* delete all index.* files;
+* start sphinx-searchd;
+* run ./bin/reindex_loadouts.
+
+An important issue regarding API cache has been fixed. You have to
+manually clear the API cache by running `make clear-api-cache`.
+
 v0.10.1, released 2013-11-19
 ============================
 

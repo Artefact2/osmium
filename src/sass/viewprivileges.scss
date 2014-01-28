@@ -1,0 +1,88 @@
+div#vprivileges {
+	text-align: center;
+
+	&> section {
+		@include fixed-width-page;
+		display: inline-block;
+		vertical-align: top;
+		text-align: left;
+		margin: 0 2em;
+	}
+
+	strong.reptotal {
+		vertical-align: middle;
+		font-size: 2em;
+	}
+
+	&> section#privlist > ol {
+		margin: 0;
+		padding: 0;
+		list-style-type: none;
+
+		&> li {
+			margin: 0 1em;
+			padding: 1em 0 1em 0;
+
+			border-top: 1px dotted rgba($subsection-border-color, 0.8);
+			&:first-child { border-top: none; }
+			&:last-child { padding-bottom: 20em !important; }
+
+			&> h2 {
+				margin: 0;
+				position: relative;
+
+				&> span {
+					position: absolute;
+					right: 0;
+				}
+
+				cursor: pointer;
+				&:before {
+					color: $aside-text-color;
+					content: '▼';
+					position: absolute;
+					left: -1em;
+				}
+			}
+
+			&.abbrev > h2:before { content: '▶'; }
+
+			&> div.progress {
+				width: 100%;
+				height: .5em;
+				text-align: right;
+				border: 1px solid rgba($subsection-border-color, 0.5);
+				background: rgba($privilege-progress-bg-color, 0.5);
+
+				position: relative;
+
+				&> div.pinner {
+					position: absolute;
+					left: 0;
+					top: 0;
+					height: 100%;
+					background: url('./progressbg.png'), rgba($privilege-progress-done-bg-color, 0.5);
+					background-size: contain;
+				}
+
+				&> span {
+					position: absolute;
+					display: block;
+					width: 10em;
+					right: 0;
+					text-align: right;
+					z-index: 1;
+				}
+			}
+
+			&.abbrev {
+				&> div.desc { display: none; }
+				&> div.progress { height: 2px; }
+			}
+
+			&.donthaveit {
+				opacity: 0.5;
+			}
+		}
+	}
+}

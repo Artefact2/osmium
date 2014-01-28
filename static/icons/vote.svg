@@ -13,7 +13,7 @@
    width="128"
    height="64"
    id="svg2"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="vote.svg">
   <sodipodi:namedview
      pagecolor="#ffffff"
@@ -30,9 +30,9 @@
      showgrid="false"
      inkscape:showpageshadow="false"
      inkscape:zoom="10.429825"
-     inkscape:cx="33.102605"
+     inkscape:cx="43.022043"
      inkscape:cy="32"
-     inkscape:window-x="1920"
+     inkscape:window-x="2048"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg2" />
@@ -65,7 +65,7 @@
      d="M 0.99999994,30.686724 32.48813,0.99999989 63,31 z" />
   <path
      inkscape:connector-curvature="0"
-     style="fill:#d1d1d2;fill-opacity:1;fill-rule:evenodd;stroke:none"
+     style="fill:#808080;fill-opacity:1;fill-rule:evenodd;stroke:none"
      id="path2987-8"
      d="M 8,59.74938 32.377905,36 56,60 z" />
   <path
@@ -75,7 +75,7 @@
      d="M 127,1.3132761 95.511872,31 65,1.0000001 z" />
   <path
      inkscape:connector-curvature="0"
-     style="fill:#d1d1d2;fill-opacity:1;fill-rule:evenodd;stroke:none"
+     style="fill:#808080;fill-opacity:1;fill-rule:evenodd;stroke:none"
      id="path2987-8-2"
      d="M 120,36.250621 95.622094,60 72,36 z" />
 </svg>

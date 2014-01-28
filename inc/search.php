@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -119,20 +119,27 @@ function index($loadout) {
 		$excellentstandings[] = 0;
 	}
 
+	$tags = array_map(function($t) { return "'".escape($t)."'"; }, explode(' ', $loadout['tags']));
+	sort($tags);
+	$tags = implode(' ', $tags);
+
 	return query(
 		'INSERT INTO osmium_loadouts (
 		id, restrictedtoaccountid, restrictedtocorporationid, restrictedtoallianceid,
 		goodstandingids, excellentstandingids,
 		shipid, upvotes, downvotes, score, creationdate, updatedate, build,
 		comments, dps, ehp, estimatedprice,
-		ship, groups, author, name, description, tags, types
+		attship, attshipgroup, attname, atttags, attauthor,
+		ship, shipgroup, name, author, tags, description, types
 		) VALUES ('
+
 		.$loadout['loadoutid'].','
 		.$loadout['restrictedtoaccountid'].','
 		.$loadout['restrictedtocorporationid'].','
 		.$loadout['restrictedtoallianceid'].','
 		.'('.implode(', ', $goodstandings).')'.','
 		.'('.implode(', ', $excellentstandings).'),'
+
 		.$loadout['shipid'].','
 		.$loadout['upvotes'].','
 		.$loadout['downvotes'].','
@@ -144,12 +151,19 @@ function index($loadout) {
 		.$loadout['dps'].','
 		.$loadout['ehp'].','
 		.$loadout['estimatedprice'].','
+
 		.'\''.escape($loadout['ship']).'\','
 		.'\''.escape($loadout['groups']).'\','
-		.'\''.escape($loadout['author']).'\','
 		.'\''.escape($loadout['name']).'\','
+		.'\''.escape($tags).'\','
+		.'\''.escape($loadout['author']).'\','
+
+		.'\''.escape($loadout['ship']).'\','
+		.'\''.escape($loadout['groups']).'\','
+		.'\''.escape($loadout['name']).'\','
+		.'\''.escape($loadout['author']).'\','
+		.'\''.escape($tags).'\','
 		.'\''.escape($loadout['description']).'\','
-		.'\''.escape($loadout['tags']).'\','
 		.'\''.escape($loadout['modules']).'\''
 		.')'
 	);
@@ -240,7 +254,7 @@ function get_search_ids($search_query, $more_cond = '', $offset = 0, $limit = 10
 		get_search_query($search_query)
 		.' '.$more_cond
 		.' LIMIT '.$offset.','.$limit
-		.' OPTION field_weights=(ship=100,groups=80,author=100,name=70,description=10,tags=150,types=30)'
+		.' OPTION field_weights=(ship=100,shipgroup=80,author=100,name=70,description=10,tags=150,types=30)'
 	);
 	if($q === false) return false; /* Invalid query */
 
@@ -333,9 +347,11 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 			$loadout['loadoutid'], $loadout['visibility'], $loadout['privatetoken']
 		);
 
+		$sn = \Osmium\Chrome\escape($loadout['typename']);
+
 		echo "<li>\n<a href='$relative/".$uri."'>"
-			."<img class='abs' src='http://image.eveonline.com/Render/"
-			.$loadout['hullid']."_256.png' alt='".$loadout['typename']."' /></a>\n";
+			."<img class='abs' src='//image.eveonline.com/Render/"
+			.$loadout['hullid']."_256.png' title='".$sn."' alt='".$sn."' /></a>\n";
 
 		$dps = $loadout['dps'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['dps'], 2);
 		$ehp = $loadout['ehp'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['ehp'], 2, 'k');
@@ -462,8 +478,13 @@ function get_search_cond_from_advanced() {
 	static $orderby = array(
 		//"relevance" => "relevance", /* Does not match to an ORDER BY statement as this is the default */
 		"creationdate" => "creation date",
+		"attname" => "name",
+		"attship" => "ship",
+		"attshipgroup" => "ship group",
+		"attauthor" => "author",
+		"atttags" => "tags",
 		"score" => "score (votes)",
-		"comments" => "comments",
+		"comments" => "number of comments",
 		"dps" => "damage per second",
 		"ehp" => "effective hitpoints",
 		"estimatedprice" => "estimated price",
@@ -475,7 +496,8 @@ function get_search_cond_from_advanced() {
 	}
 
 	if(isset($_GET['sort']) && isset($orderby[$_GET['sort']])) {
-		$cond .= ' ORDER BY '.$_GET['sort'].' DESC';
+		$order = isset($_GET['order']) && in_array($_GET['order'], [ 'asc', 'desc' ]) ? $_GET['order'] : 'DESC';
+		$cond .= ' ORDER BY '.$_GET['sort'].' '.$order;
 	}
 
 	return $cond;
@@ -495,16 +517,26 @@ function print_search_form($uri = null, $relative = '.', $label = 'Search loadou
 	static $orderby = array(
 		"relevance" => "relevance",
 		"creationdate" => "creation date",
+		"attname" => "name",
+		"attship" => "ship",
+		"attshipgroup" => "ship group",
+		"attauthor" => "author",
+		"atttags" => "tags",
 		"score" => "score (votes)",
-		"comments" => "comments",
+		"comments" => "number of comments",
 		"dps" => "damage per second",
 		"ehp" => "effective hitpoints",
 		"estimatedprice" => "estimated price",
 	);
 
+	static $orders = array(
+		'desc' => 'in descending order',
+		'asc' => 'in ascending order',
+	);
+
 	static $examples = array(
 		"@ship Drake | Tengu @tags missile-boat",
-		"@groups Cruiser -Strategic -Heavy @dps >= 500",
+		"@shipgroup Cruiser -Strategic -Heavy @dps >= 500",
 		"@tags -armor-tank",
 		"@dps >= 400 @ehp >= 40k @tags pvp",
 		"battlecruiser @types \"stasis webifier\"",
@@ -565,7 +597,17 @@ function print_search_form($uri = null, $relative = '.', $label = 'Search loadou
 			}
 			echo ">{$label}</option>\n";
 		}
-		echo "</select>\n<input type='hidden' name='ad' value='1' />\n";
+		echo "</select>\n";
+		echo "<select name='order' id='order'>\n";
+		foreach($orders as $k => $label) {
+			echo "<option value='{$k}'";
+			if(isset($_GET['order']) && $_GET['order'] === $k) {
+				echo " selected='selected'";
+			}
+			echo ">{$label}</option>\n";
+		}
+		echo "</select>\n";
+		echo "<input type='hidden' name='ad' value='1' />\n";
 		echo "<br />\n<a href='{$relative}/help/search'><small>Help</small></a>\n";
 	} else {
 		$get = 'ad=1';

@@ -1,5 +1,5 @@
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -147,6 +147,32 @@ osmium_init_sources = function() {
 
 	osmium_init_browser();
 	osmium_init_shortlist();
+
+	$("div#nlsources > section").on('osmium-update-overflow', function() {
+		var s = $(this);
+		var mh;
+
+		s.css(
+			'max-height',
+			(mh = ($(window).height() - $("div#nlsources").offset().top - 64)) + "px"
+		);
+
+		if(s[0].scrollHeight >= mh) {
+			if(s.children('div.ps-scrollbar-y-rail').length === 0) {
+				s.perfectScrollbar({
+					wheelSpeed: 40,
+					suppressScrollX: true
+				});
+			} else {
+				s.perfectScrollbar('update');
+			}
+		} else {
+			s.perfectScrollbar('destroy');
+		}
+	});
+
+	$(window).resize(function() { $("div#nlsources > section").trigger('osmium-update-overflow'); });
+	$("div#nlsources > section").trigger('osmium-update-overflow');
 };
 
 osmium_init_browser = function() {
@@ -230,6 +256,8 @@ osmium_init_browser = function() {
 		} else {
 			t.parent().removeClass('partiallyunfolded');
 		}
+
+		t.closest('section').trigger('osmium-update-overflow');
 	});
 };
 
@@ -344,6 +372,39 @@ osmium_add_generic_showinfo = function(menu, typeid) {
 	}, { icon: osmium_showinfo_sprite_position });
 };
 
+osmium_add_generic_browse_mg = function(menu, typeid, opts) {
+	if(opts === undefined) opts = {};
+
+	var title = ("title" in opts) ? opts.title : "Browse market group";
+
+	osmium_ctxmenu_add_option(menu, title, function() {
+		var mgroot = $("div#nlsources > section#browse div.mgroot");
+		var groupid = osmium_types[typeid][9];
+		var stack = [];
+		var lasth4;
+
+		while(groupid !== undefined) {
+			stack.push(groupid);
+			groupid = osmium_groups[groupid].parent;
+		}
+
+		mgroot.find('ul.children > li').not('.folded').children('h4').click();
+
+		while((groupid = stack.pop()) !== undefined) {
+			lasth4 = mgroot.find('ul.children > li').filter(function() {
+				return $(this).data('mgid') === groupid;
+			}).children('h4').click();
+		}
+
+		$("div#nlsources ul.tabs > li > a[href='#browse']").click();
+		mgroot.parent()
+			.scrollTop(0)
+			.scrollTop(lasth4.offset().top - mgroot.parent().offset().top)
+			.trigger('osmium-update-overflow')
+		;
+	}, { icon: [ 0, 11, 64, 64 ] });
+};
+
 osmium_add_non_shortlist_contextmenu = function(li) {
 	osmium_ctxmenu_bind(li, function() {
 		var menu = osmium_ctxmenu_create();
@@ -364,6 +425,7 @@ osmium_add_non_shortlist_contextmenu = function(li) {
 			osmium_commit_shortlist();
 		}, {});
 		osmium_ctxmenu_add_separator(menu);
+		osmium_add_generic_browse_mg(menu, li.data('typeid'));
 		osmium_add_generic_showinfo(menu, li.data('typeid'));
 
 		return menu;
@@ -380,6 +442,7 @@ osmium_add_shortlist_contextmenu = function(li) {
 			osmium_commit_shortlist();
 		}, {});
 		osmium_ctxmenu_add_separator(menu);
+		osmium_add_generic_browse_mg(menu, li.data('typeid'));
 		osmium_add_generic_showinfo(menu, li.data('typeid'));
 
 		return menu;

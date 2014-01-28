@@ -21,18 +21,15 @@ namespace Osmium\Page\ViewFlaggingHistory;
 require __DIR__.'/../inc/root.php';
 
 if(!isset($_GET['accountid'])) {
-	\Osmium\fatal(404, 'No accountid given.');
+	\Osmium\fatal(400);
 }
 
-if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, 'Please login first.');
-}
-
+\Osmium\State\assume_logged_in('..');
 $a = \Osmium\State\get_state('a');
 $accountid = intval($_GET['accountid']);
 
 if($a['accountid'] != $accountid && $a['ismoderator'] !== 't') {
-	\Osmium\fatal(403, "You lack the required permissions.");
+	\Osmium\fatal(403);
 }
 
 \Osmium\Chrome\print_header('Flagging history', '..');

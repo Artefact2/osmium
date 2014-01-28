@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -56,7 +56,9 @@ echo "<tr><td><a href='//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min
 
 echo "<tr><td><a href='//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js'>jquery-ui.min.js</a></td><td><a href='https://raw.github.com/jquery/jquery-ui/master/MIT-LICENSE.txt'>MIT</a></td><td><a href='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.js'>https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.js</a></td></tr>\n";
 
-echo "<tr><td><a href='//cdnjs.cloudflare.com/ajax/libs/jsPlumb/1.4.1/jquery.jsPlumb-1.4.1-all-min.js'>jquery.jsPlumb-1.4.1-all-min.js</a></td><td><a href='https://github.com/sporritt/jsPlumb/blob/1.5.1/jsPlumb-MIT-LICENSE.txt'>MIT</a></td><td><a href='https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/1.4.1/jquery.jsPlumb-1.4.1-all.js'>https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/1.4.1/jquery.jsPlumb-1.4.1-all.js</a></td></tr>\n";
+echo "<tr><td><a href='https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.4.6/jquery.perfect-scrollbar-with-mousewheel.min.js'>perfect-scrollbar-with-mousewheel.min.js</a></td><td><a href='http://www.yuiazu.net/perfect-scrollbar/'>MIT</a></td><td><a href='https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.4.6/jquery.perfect-scrollbar-with-mousewheel.js'>https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.4.6/jquery.perfect-scrollbar-with-mousewheel.js</a></td></tr>\n";
+
+echo "<tr><td><a href='./static/jquery.jsPlumb-1.5.4-min.js'>jquery.jsPlumb-1.5.4-min.js</a></td><td><a href='https://github.com/sporritt/jsPlumb/blob/1.5.4/jsPlumb-MIT-LICENSE.txt'>MIT</a></td><td><a href='https://raw.github.com/sporritt/jsPlumb/1.5.4/dist/js/jquery.jsPlumb-1.5.4.js'>https://raw.github.com/sporritt/jsPlumb/1.5.4/dist/js/jquery.jsPlumb-1.5.4.js</a></td></tr>\n";
 
 echo "<tr><td><a href='./static-1/rawdeflate.min.js'>rawdeflate.min.js</a></td><td><a href='http://opensource.org/licenses/GPL-2.0'>GNU-GPL-2.0-only</a><br /><a href='http://opensource.org/licenses/mit-license'>MIT</a></td><td><a href='https://raw.github.com/dankogai/js-deflate/1cc649243c7e0ada065b880180bdccce3c2dbcc2/rawdeflate.js'>https://raw.github.com/dankogai/js-deflate/1cc649243c7e0ada065b880180bdccce3c2dbcc2/rawdeflate.js</a><br /><a href='https://raw.github.com/dankogai/js-deflate/1cc649243c7e0ada065b880180bdccce3c2dbcc2/test/base64.js'>https://raw.github.com/dankogai/js-deflate/1cc649243c7e0ada065b880180bdccce3c2dbcc2/test/base64.js</a></td></tr>\n";
 

@@ -28,7 +28,7 @@ if(isset($_GET['import']) && $_GET['import'] == 'dna') {
 	    $mangled = \Osmium\Fit\mangle_dna($dna);
 
 	    if($mangled === false) {
-		    \Osmium\Fatal(400, "Nonsensical DNA string");
+		    \Osmium\Fatal(400);
 	    }
 
 	    if($mangled !== $dna) {
@@ -43,7 +43,7 @@ if(isset($_GET['import']) && $_GET['import'] == 'dna') {
 	    $fit = \Osmium\Fit\try_parse_fit_from_shipdna($dna, 'New DNA-imported loadout', $errors);
 
 	    if($fit === false) {
-		    \Osmium\Fatal(400, "Nonsensical DNA string");
+		    \Osmium\Fatal(400);
 	    }
 
 	    \Osmium\State\put_cache_memory_fb($ckey, $fit, 7200);
@@ -78,7 +78,7 @@ if(isset($_GET['import']) && $_GET['import'] == 'dna') {
 
 $loadoutid = isset($_GET['loadoutid']) ? intval($_GET['loadoutid']) : 0;
 if(!\Osmium\State\can_view_fit($loadoutid)) {
-	\Osmium\fatal(404, 'Loadout not found.');
+	\Osmium\fatal(404);
 }
 
 $latestfit = \Osmium\Fit\get_fit($loadoutid);
@@ -93,7 +93,7 @@ if(isset($_GET['revision']) && $_GET['revision'] !== '') {
 	$revision_overridden = true;
 
 	if($fit === false) {
-		\Osmium\fatal(404, 'Lodaout revision not found.');
+		\Osmium\fatal(404);
 	}
 } else {
 	$fit = $latestfit;
@@ -104,7 +104,7 @@ if($latestfit['metadata']['visibility'] == \Osmium\Fit\VISIBILITY_PRIVATE) {
 	$privatetoken = $latestfit['metadata']['privatetoken'];
 
 	if(!isset($_GET['privatetoken']) || (string)$_GET['privatetoken'] !== (string)$privatetoken) {
-		\Osmium\fatal(403, 'This loadout is private.');
+		\Osmium\fatal(404);
 	}
 
 	define('RELATIVE', '../../..'.(isset($_GET['fleet']) ? '/../..' : ''));
@@ -164,7 +164,7 @@ if(isset($_GET['remote']) && $_GET['remote']) {
 
 	if($key !== 'local') {
 		if(!isset($fit['remote'][$key])) {
-			\Osmium\Fatal(404, "This loadout has no such remote.");
+			\Osmium\Fatal(404);
 		}
 
 		$revision = $fit['metadata']['revision'];
@@ -189,7 +189,7 @@ if(isset($_GET['fleet']) && $_GET['fleet']) {
 
 	if(!isset($fit['fleet'][$t]) || !isset($fit['fleet'][$t]['ship']['typeid'])
 	|| !$fit['fleet'][$t]['ship']['typeid']) {
-		\Osmium\Fatal(404, "This loadout has no {$t} booster.");
+		\Osmium\Fatal(404);
 	}
 
 	$revision = $fit['metadata']['revision'];

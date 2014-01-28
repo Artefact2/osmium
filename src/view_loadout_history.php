@@ -23,7 +23,7 @@ require __DIR__.'/../inc/root.php';
 $loadoutid = intval($_GET['loadoutid']);
 
 if(!\Osmium\State\can_view_fit($loadoutid)) {
-	\Osmium\fatal(404, 'Loadout not found.');
+	\Osmium\fatal(404);
 }
 $fit = \Osmium\Fit\get_fit($loadoutid);
 $can_edit = \Osmium\State\can_edit_fit($loadoutid);

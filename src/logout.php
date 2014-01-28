@@ -21,22 +21,23 @@ namespace Osmium\Page\Logout;
 require __DIR__.'/../inc/root.php';
 
 if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "Not logged in.");
+	goto redirect; /* Boooo */
 }
 
 if(!isset($_GET['tok'])) {
-	\Osmium\fatal(403, "No token.");
+	\Osmium\fatal(400);
 }
 
 $tok = $_GET['tok'];
 if($tok != \Osmium\State\get_token()) {
-	\Osmium\fatal(403, "Invalid token.");
+	\Osmium\fatal(400);
 }
 
 $global = isset($_GET['global']) && $_GET['global'];
 
 \Osmium\State\logoff($global);
 
+redirect:
 header('HTTP/1.1 303 See Other', true, 303);
 header('Location: ./', true, 303);
 die(); /* Our work here is done. */

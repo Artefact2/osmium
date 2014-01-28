@@ -21,7 +21,7 @@ require __DIR__.'/../inc/root.php';
 
 /* Keep in mind, sitemaps should not be bigger than 10 MiB (compressed
  * size), and should not contain more than 50,000 URLs. */
-const BATCH_SIZE = 1000;
+const BATCH_SIZE = 50000;
 
 $root = rtrim(\Osmium\get_ini_setting('sitemap_root')
               .\Osmium\get_ini_setting('relative_path'), '/');
@@ -42,7 +42,7 @@ $xmlns->appendChild($idx->createTextNode('http://www.sitemaps.org/schemas/sitema
 
 $s = $si->appendChild($idx->createElement('sitemap'));
 $loc = $s->appendChild($idx->createElement('loc'));
-$loc->appendChild($idx->createTextNode($root.'/static/cache/sitemap-static-'.\Osmium\STATICVER.'.xml.gz'));
+$loc->appendChild($idx->createTextNode($root.'/sitemap-static.xml.gz'));
 $lastmod = $s->appendChild($idx->createElement('lastmod'));
 $lastmod->appendChild($idx->createTextNode($fdate(filemtime(__DIR__.'/../inc/root.php'))));
 
@@ -63,6 +63,7 @@ $static = [
 	'/help/formats',
 	'/api',
 	'/compare/dps',
+	'/privileges',
 ];
 
 $subidx = new \DOMDocument();
@@ -78,7 +79,7 @@ foreach($static as $spage) {
 
 $subidx->formatOutput = true;
 $subidx->encoding = 'UTF-8';
-file_put_contents(\Osmium\ROOT.'/static/cache/sitemap-static-'.\Osmium\STATICVER.'.xml', $subidx->saveXML());
+file_put_contents(\Osmium\ROOT.'/static/cache/sitemap-static.xml', $subidx->saveXML());
 
 echo ".";
 
@@ -93,13 +94,15 @@ $batchq = \Osmium\Db\query_params(
 	FROM osmium.allowedloadoutsanonymous ala
 	JOIN osmium.loadoutslatestrevision llr ON llr.loadoutid = ala.loadoutid
 	JOIN osmium.loadouthistory lh ON lh.loadoutid = llr.loadoutid AND lh.revision = llr.latestrevision
+	JOIN osmium.loadouts l ON l.loadoutid = ala.loadoutid
+	WHERE l.visibility = $2
 	GROUP BY floor(ala.loadoutid / $1)
 	ORDER BY floor(ala.loadoutid / $1) ASC',
-	array(BATCH_SIZE)
+	array(BATCH_SIZE, \Osmium\Fit\VISIBILITY_PUBLIC)
 );
 while($batch = \Osmium\Db\fetch_row($batchq)) {
 	list($i, $maxts) = $batch;
-	$fname = 'sitemap-loadouts-'.$i.'-'.$maxts.'.xml';
+	$fname = 'sitemap-loadouts-'.$i.'.xml';
 
 	echo ".";
 
@@ -114,9 +117,10 @@ while($batch = \Osmium\Db\fetch_row($batchq)) {
 		FROM osmium.allowedloadoutsanonymous ala
 		JOIN osmium.loadoutslatestrevision llr ON llr.loadoutid = ala.loadoutid
 		JOIN osmium.loadouthistory lh ON lh.loadoutid = llr.loadoutid AND lh.revision = llr.latestrevision
-		WHERE ala.loadoutid >= $1 AND ala.loadoutid < $2
+		JOIN osmium.loadouts l ON l.loadoutid = ala.loadoutid
+		WHERE ala.loadoutid >= $1 AND ala.loadoutid < $2 AND l.visibility = $3
 		ORDER BY ala.loadoutid ASC',
-		array($i * BATCH_SIZE, ($i + 1) * BATCH_SIZE)
+		array($i * BATCH_SIZE, ($i + 1) * BATCH_SIZE, \Osmium\Fit\VISIBILITY_PUBLIC)
 	);
 	while($inner = \Osmium\Db\fetch_row($innerq)) {
 		list($loadoutid, $updatedate) = $inner;
@@ -155,7 +159,7 @@ $batchq = \Osmium\Db\query_params(
 );
 while($batch = \Osmium\Db\fetch_row($batchq)) {
 	list($i, $maxts) = $batch;
-	$fname = 'sitemap-profiles-'.$i.'-'.$maxts.'.xml';
+	$fname = 'sitemap-profiles-'.$i.'.xml';
 
 	echo ".";
 

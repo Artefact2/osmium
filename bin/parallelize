@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+if($argc < 3) {
+	die("Usage: {$argv[0]} <count> <command…>\n");
+}
+
+$me = array_shift($argv);
+$count = (int)array_shift($argv);
+$command = escapeshellcmd(array_shift($argv));
+$command .= ' '.implode(' ', array_map('escapeshellarg', $argv));
+
+$range = implode(' ', range(0, $count - 1));
+
+passthru("echo {$range} | xargs -n 1 -P {$count} {$command} {$count}");

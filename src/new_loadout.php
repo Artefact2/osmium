@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +32,7 @@ if(isset($_GET['import']) && $_GET['import'] === 'dna') {
 	    $fit = \Osmium\Fit\try_parse_fit_from_shipdna($dna, 'New DNA-imported loadout', $errors);
 
 	    if($fit === false) {
-		    \Osmium\Fatal(400, "Nonsensical DNA string");
+		    \Osmium\Fatal(400);
 	    }
 
 	    \Osmium\State\put_cache_memory_fb($ckey, $fit, 7200);
@@ -51,16 +51,16 @@ if(isset($_GET['edit']) && $_GET['edit'] && isset($_GET['loadoutid'])
 	$revision = isset($_GET['revision']) ? (int)$_GET['revision'] : null;
 
 	if(!\Osmium\State\can_view_fit($loadoutid)) {
-		\Osmium\Fatal(404, "Loadout not found");
+		\Osmium\Fatal(404);
 	}
 	if(!\Osmium\State\can_edit_fit($loadoutid)) {
-		\Osmium\Fatal(403, "Permission is required to edit this loadout");
+		\Osmium\Fatal(403);
 	}
 
 	$fit = \Osmium\Fit\get_fit($loadoutid, $revision);
 
 	if(!\Osmium\State\can_access_fit($fit)) {
-		\Osmium\Fatal(403, "Can't access loadout, password-protected?");
+		\Osmium\Fatal(403);
 	}
 
 	$tok = \Osmium\State\get_unique_loadout_token();
@@ -75,13 +75,13 @@ if(isset($_GET['fork']) && $_GET['fork'] && isset($_GET['loadoutid'])) {
 	$revision = isset($_GET['revision']) ? (int)$_GET['revision'] : null;
 
 	if(!\Osmium\State\can_view_fit($loadoutid)) {
-		\Osmium\Fatal(404, "Loadout not found");
+		\Osmium\Fatal(404);
 	}
 
 	$fit = \Osmium\Fit\get_fit($loadoutid, $revision);
 
 	if(!\Osmium\State\can_access_fit($fit)) {
-		\Osmium\Fatal(403, "Can't access loadout, password-protected?");
+		\Osmium\Fatal(403);
 	}
 
 	$fork = $fit; /* Since $fit is an array, this makes a copy */
@@ -122,7 +122,7 @@ if(isset($_GET['fork']) && $_GET['fork'] && isset($_GET['loadoutid'])) {
 		$key = $_GET['remote'];
 
 		if($key !== 'local' && !isset($fit['remote'][$key])) {
-			\Osmium\fatal(404, "No such remote.");
+			\Osmium\fatal(404);
 		}
 
 		\Osmium\Fit\set_local($fork, $key);
@@ -145,7 +145,7 @@ if(isset($_GET['fork']) && $_GET['fork'] && isset($_GET['loadoutid'])) {
 
 		if(!isset($fit['fleet'][$t]) || !isset($fit['fleet'][$t]['ship']['typeid'])
 		|| !$fit['fleet'][$t]['ship']['typeid']) {
-			\Osmium\fatal(404, "No such fleet booster.");
+			\Osmium\fatal(404);
 		}
 
 		$fork = $fit['fleet'][$t];
@@ -199,7 +199,10 @@ if(isset($fit['metadata']['loadoutid']) && $fit['metadata']['loadoutid'] > 0) {
 	$title = $basetitle = 'Creating a new loadout';
 }
 
-\Osmium\Chrome\print_header($basetitle, RELATIVE, false);
+\Osmium\Chrome\print_header(
+	$basetitle, RELATIVE, false,
+	"<link href='//cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.4.6/perfect-scrollbar.css' rel='stylesheet' type='text/css' />\n"
+);
 
 echo "<h1>".$title."</h1>\n";
 
@@ -312,9 +315,9 @@ echo "</section>\n";
 echo "<section id='metadata'>\n";
 \Osmium\Forms\print_form_begin();
 \Osmium\Forms\print_generic_field('Loadout title', 'text', 'name', 'name');
-\Osmium\Forms\print_textarea('Description<br /><small>(optional)</small>', 'description', 'description');
-\Osmium\Forms\print_generic_field('Tags (space-separated)<br /><small>(between '
-                                  .(int)\Osmium\get_ini_setting('min_tags').' and '
+\Osmium\Forms\print_textarea('Description<br /><small>(optional,<br />Markdown and some HTML allowed)</small>', 'description', 'description');
+\Osmium\Forms\print_generic_field('Tags<br /><small>(space-separated, '
+                                  .(int)\Osmium\get_ini_setting('min_tags').'-'
                                   .(int)\Osmium\get_ini_setting('max_tags').')</small>',
                                   'text', 'tags', 'tags');
 $commontags = array(
@@ -474,6 +477,8 @@ echo "</section>\n</div>\n";
 \Osmium\Chrome\print_loadout_common_footer($fit, RELATIVE, $tok);
 
 \Osmium\Chrome\add_js_data('shortlist', json_encode(\Osmium\AjaxCommon\get_module_shortlist()));
+
+\Osmium\Chrome\include_js("//cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.4.6/jquery.perfect-scrollbar-with-mousewheel.min.js");
 
 \Osmium\Chrome\print_js_snippet('new_loadout');
 \Osmium\Chrome\print_js_snippet('new_loadout-control');

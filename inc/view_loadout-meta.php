@@ -199,7 +199,7 @@ print_list("Permissions and visibility", $perms);
 $actions = array();
 
 if($loadoutid !== false && \Osmium\Flag\is_fit_flaggable($fit)) {
-	$actions[] = "<strong><a href='".RELATIVE."/flag/".$loadoutid."' class='dangerous'>Flag this loadout</a></strong>: report that this loadout requires moderator attention.";
+	$actions[] = "<strong><a href='".RELATIVE."/flag/".$loadoutid."' class='dangerous'>⚑ Flag this loadout</a></strong>: report that this loadout requires moderator attention.";
 }
 
 if($can_edit) {
@@ -247,7 +247,7 @@ if(isset($rauthorname)) {
 if(isset($fit['ship']['typeid'])) {
 	$actions[] = [
 		"external.svg",
-		"<a href='http://zkillboard.com/ship/".$fit['ship']['typeid']."/'>".$shipname." activity on zKillboard</a>"
+		"<a href='//zkillboard.com/ship/".$fit['ship']['typeid']."/'>".$shipname." activity on zKillboard</a>"
 	];
 }
 

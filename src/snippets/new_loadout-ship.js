@@ -1,5 +1,5 @@
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -63,7 +63,9 @@ osmium_gen_ship = function() {
 	h = $(document.createElement('h1'));
 	h.append(img);
 	h.append($(document.createElement('small')).addClass('groupname').text(groupname));
-	h.append($(document.createElement('strong')).text(shipname).prop('title', shipname));
+	h.append($(document.createElement('strong')).append(
+		$(document.createElement('span')).addClass('name').text(shipname)
+	).prop('title', shipname));
 
 	section.children('h1').remove();
 	section.append(h);
@@ -82,24 +84,6 @@ osmium_init_ship = function() {
 		}, { icon: [ 1, 13, 64, 64 ] });
 
 		osmium_ctxmenu_add_separator(menu);
-
-		osmium_ctxmenu_add_subctxmenu(menu, "Use skills", function() {
-			var smenu = osmium_ctxmenu_create();
-
-			for(var i = 0; i < osmium_skillsets.length; ++i) {
-				osmium_ctxmenu_add_option(smenu, osmium_skillsets[i], (function(sname) {
-					return function() {
-						osmium_clf.metadata['X-Osmium-skillset'] = sname;
-						osmium_undo_push();
-						osmium_commit_clf();
-					};
-				})(osmium_skillsets[i]), {
-					toggled: osmium_clf.metadata['X-Osmium-skillset'] === osmium_skillsets[i]
-				});
-			}
-
-			return smenu;
-		}, { icon: "//image.eveonline.com/Type/3327_64.png" });
 
 		osmium_ctxmenu_add_subctxmenu(menu, "Reload times", function() {
 			var smenu = osmium_ctxmenu_create();
@@ -286,15 +270,17 @@ osmium_init_ship = function() {
 			form.trigger('submit');
 		}, {});
 
-		osmium_ctxmenu_add_separator(menu);
+		if("ship" in osmium_clf && "typeid" in osmium_clf.ship) {
+			osmium_ctxmenu_add_separator(menu);
 
-		osmium_ctxmenu_add_option(menu, "Show ship info", function() {
-			if("ship" in osmium_clf && "typeid" in osmium_clf.ship) {
-				osmium_showinfo({ type: "ship" });
-			} else {
-				alert("No ship is selected. Please select one first (by searching for it or by using the browser).");
+			if(!osmium_loadout_readonly) {
+				osmium_add_generic_browse_mg(menu, osmium_clf.ship.typeid);
 			}
-		}, { icon: osmium_showinfo_sprite_position, 'default': true });
+
+			osmium_ctxmenu_add_option(menu, "Show ship info", function() {
+				osmium_showinfo({ type: "ship" });
+			}, { icon: osmium_showinfo_sprite_position, 'default': true });
+		}
 
 		return menu;
 	});

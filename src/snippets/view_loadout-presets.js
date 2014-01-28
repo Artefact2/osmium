@@ -20,10 +20,12 @@ osmium_append_loadoutid_uri = function(append) {
 	var private_re = /\/loadout\/private\/([1-9][0-9]*)([^?#\/]*)/;
 	var m;
 
+	window.location.hash = '';
+
 	if((m = window.location.href.match(public_re)) !== null) {
 		window.location.replace(window.location.href.replace(public_re, "/loadout/$1" + append));
 	} else if((m = window.location.href.match(private_re)) !== null) {
-		window.location.replace(window.location.href.replace(public_re, "/loadout/private/$1" + append));
+		window.location.replace(window.location.href.replace(private_re, "/loadout/private/$1" + append));
 	}
 };
 

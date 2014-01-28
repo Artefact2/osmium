@@ -88,6 +88,7 @@ $osmium_dispatch_rules = array(
 	'%^/editskillset/(?<name>.+)$%D' => '/src/edit_skillset.php',
 	'%^/resetpassword$%D' => '/src/reset_password.php',
 	'%^/notifications$%D' => '/src/view_notifications.php',
+	'%^/privileges$%D' => '/src/view_privileges.php',
 
 	'%^/help$%D' => [ '/src/mdstatic.php',
 	                  ['relative' => '..', 'title' => 'Osmium help', 'f' => 'help.md']
@@ -122,15 +123,17 @@ $osmium_dispatch_rules = array(
 
 	/* Stuff for robots */
 	'%^/robots\.txt$%D' => [ '/src/staticpassthrough.php', [ 'f' => 'static/robots.txt',
-	                                                         'type' => 'text/plain' ]
+	                                                         'type' => 'text/plain', ]
 	],
 	'%^/sitemap\.xml\.gz$%D' => [ '/src/staticpassthrough.php', [ 'f' => 'static/cache/sitemap-root.xml.gz',
 	                                                              'type' => 'application/x-gzip',
-	                                                              'dontcompress' => true ]
+	                                                              'dontcompress' => true,
+	                                                              'mexpire' => 93600, ]
 	],
 	'%^/sitemap-(?<sitemap>[a-z0-9-]+)\.xml\.gz$%D' => [ '/src/staticpassthrough.php',
 	                                                     [ 'type' => 'application/x-gzip',
-	                                                       'dontcompress' => true ]
+	                                                       'dontcompress' => true,
+	                                                       'mexpire' => 93600, ]
 	],
 );
 
@@ -154,4 +157,4 @@ foreach($osmium_dispatch_rules as $rule => $target) {
 	die();
 }
 
-\Osmium\Fatal(404, "NOT FOUND (DISPATCHER)");
+\Osmium\Fatal(404);

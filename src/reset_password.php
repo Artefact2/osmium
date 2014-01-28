@@ -20,10 +20,7 @@ namespace Osmium\Page\ResetPassword;
 
 require __DIR__.'/../inc/root.php';
 
-if(\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "You are already logged in.");
-}
-
+\Osmium\State\assume_logged_out('.');
 \Osmium\Chrome\print_header('Reset password', '.');
 
 echo "<h1>Password reset</h1>\n";

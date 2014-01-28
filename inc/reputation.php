@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,8 +42,7 @@ const PRIVILEGE_COMMENT_LOADOUT = 2;
 const PRIVILEGE_REPLY_TO_COMMENTS = 3;
 const PRIVILEGE_UPVOTE = 4;
 const PRIVILEGE_DOWNVOTE = 5;
-const PRIVILEGE_CREATE_TAG = 6;
-const PRIVILEGE_RETAG_LOADOUTS = 7;
+const PRIVILEGE_RETAG_LOADOUTS = 6;
 
 /**
  * Get reputation values of up/down flags.
@@ -69,18 +68,40 @@ function get_updown_vote_reputation() {
 /**
  * Get all privileges that can be obtained with reputation points.
  *
- * @param array(<privilege_id> => array(privilege_desc, rep_needed,
- * rep_needed_in_bootstrap_mode))
+ * @param array(<privilege_id> => array( name, desc, req => [ <req>, <bs_req> ] ))
  */
 function get_privileges() {
 	return array(
-		PRIVILEGE_CREATE_LOADOUT => array('Create a loadout', 1, 1),
-		PRIVILEGE_COMMENT_LOADOUT => array('Comment on loadouts', 1, 1),
-		PRIVILEGE_REPLY_TO_COMMENTS => array('Reply to comments', 25, 1),
-		PRIVILEGE_UPVOTE => array('Cast upvotes', 25, 1),
-		PRIVILEGE_DOWNVOTE => array('Cast downvotes', 75, 25),
-		//PRIVILEGE_RETAG_LOADOUTS => array('Retag loadouts', 500, 500),
-		//PRIVILEGE_CREATE_TAG => array('Create tags', 1000, 1),
+		PRIVILEGE_CREATE_LOADOUT => [
+			'name' => 'Create loadouts',
+			'desc' => '<p>You can create public loadouts and share them with the rest of the world.<br /><small>(You can always create private or hidden loadouts, regardless of whether you have this privilege or not.)</small></p>',
+			'req' => [ 1, 1 ],
+		],
+		PRIVILEGE_COMMENT_LOADOUT => [
+			'name' => 'Comment on loadouts',
+			'desc' => '<p>You can comment public loadouts.<br />Use them to suggest some improvements, or to share your experience of the loadout in the field!<br /><small>(You can always comment your own loadouts.)</small></p>',
+			'req' => [ 1, 1 ],
+		],
+		PRIVILEGE_REPLY_TO_COMMENTS => [
+			'name' => 'Reply to comments',
+			'desc' => '<p>You can reply to comments on public loadouts.<br /><small>(You can always reply to your own comments.)</small></p>',
+			'req' => [ 10, 1 ],
+		],
+		PRIVILEGE_UPVOTE => [
+			'name' => 'Cast upvotes',
+			'desc' => '<p>You can cast upvotes on public loadouts and comments. Upvote content which you believe belongs to the top.<br /><strong>Upvote loadouts that are creative, effective, fill a well-defined role, and/or are nicely formatted and extensively described.<br />Upvote comments that bring up interesting points.</strong><br /><small>(To prevent cheating, only API-verified accounts can cast votes.)</small></p>',
+			'req' => [ 25, 1 ],
+		],
+		PRIVILEGE_DOWNVOTE => [
+			'name' => 'Cast downvotes',
+			'desc' => '<p>You can cast downvotes on public loadouts and comments.<br /><strong>Downvote loadouts that are badly formatted, show no research effort, or have severe flaws.<br />Downvote troll or otherwise useless comments.<br />You should still flag offensive content, duplicates and spam so the moderation can deal with it.</strong></p>',
+			'req' => [ 50, 25 ],
+		],
+		PRIVILEGE_RETAG_LOADOUTS => [
+			'name' => 'Re-tag loadouts',
+			'desc' => '<p>You can change tags of all public loadouts by clicking the <strong>✎ Edit tags</strong> link next to the title.<br />Re-tag loadouts which have no tags at all, or that are poorly tagged.<br />Make it easy and consistent for other users to effectively search for loadouts.<br />Re-use common tags if possible.<br /><small>(You can undo your tag changes by viewing the loadout history, and reverting to an older revision.<br />You can obviously always re-tag your own loadouts.)</small></p>',
+			'req' => [ 100, 100 ],
+		],
 		);
 }
 
@@ -114,7 +135,7 @@ function get_current_reputation() {
 	return $a['reputation'];
 }
 
-function has_privilege($privilege) {
+function has_privilege($privilege, $accountid = null) {
 	static $bootstrap = null;
 	static $priv = null;
 	if($bootstrap === null) {
@@ -122,11 +143,21 @@ function has_privilege($privilege) {
 		$priv = get_privileges();
 	}
 
-	list(, $req, $reqbs) = $priv[$privilege];
+	$req = $priv[$privilege]['req'];
+	$a = \Osmium\State\get_state('a', []);
 
-	$currentrep = get_current_reputation();
+	if($accountid === null || isset($a['accountid']) && $a['accountid'] == $accountid) {
+		$currentrep = get_current_reputation();
+	} else {
+		$currentrep = (int)\Osmium\Db\fetch_row(
+			\Osmium\Db\query_params(
+				'SELECT reputation FROM osmium.accounts WHERE accountid = $1',
+				array($accountid)
+			)
+		)[0];
+	}
 
-	return $currentrep >= ($bootstrap ? $reqbs : $req);
+	return $currentrep >= ($bootstrap ? $req[1] : $req[0]);
 }
 
 /**
@@ -282,4 +313,47 @@ function cast_updown_vote($type, $targettype, $targetaccountid, $givesreputation
 
 	\Osmium\Db\query('COMMIT;');
 	return true;
+}
+
+/**
+ * Undo the reputation changes from a set of votes, and optionally delete them.
+ *
+ * You should wrap this in a transaction.
+ */
+function nullify_votes($filter, array $filterparams, $alsodelete = false) {
+	$q = \Osmium\Db\query_params(
+		'SELECT voteid, fromaccountid, accountid, reputationgiventosource, reputationgiventodest
+		FROM osmium.votes v
+		WHERE '.$filter,
+		$filterparams
+	);
+
+	while($v = \Osmium\Db\fetch_assoc($q)) {
+		if($v['reputationgiventodest'] != 0 && $v['accountid'] > 0) {
+			\Osmium\Db\query_params(
+				'UPDATE accounts SET reputation = GREATEST($3, reputation - $1)
+				WHERE accountid = $2',
+				array($v['reputationgiventodest'], $v['accountid'], MIN_REPUTATION)
+			);
+		}
+
+		if($v['reputationgiventosource'] != 0 && $v['fromaccountid'] > 0) {
+			\Osmium\Db\query_params(
+				'UPDATE accounts SET reputation = GREATEST($3, reputation - $1)
+				WHERE accountid = $2',
+				array($v['reputationgiventosource'], $v['fromaccountid'], MIN_REPUTATION)
+			);
+		}
+	}
+
+	if($alsodelete) {
+		\Osmium\Db\query_params('DELETE FROM osmium.votes v WHERE '.$filter, $filterparams);
+	} else {
+		\Osmium\Db\query_params(
+			'UPDATE osmium.votes v
+			SET reputationgiventodest = 0, reputationgiventosource = 0
+			WHERE '.$filter,
+			$filterparams
+		);
+	}
 }

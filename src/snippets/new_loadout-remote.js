@@ -64,7 +64,9 @@ osmium_gen_projected = function() {
 	osmium_projected_clean();
 
 	jsPlumb.bind("connection", function(info) {
-		if(info.source.closest('div.pr-loadout').get(0) === info.target.get(0)) {
+		var src = $(info.source), tgt = $(info.target);
+
+		if(src.closest('div.pr-loadout').get(0) === tgt.get(0)) {
 			/* Disallow self-projection. While libdogma can handle it
 			 * in theory, it doesn't make a lot of sense to allow it
 			 * since real dogma dosen't allow it. */
@@ -83,10 +85,10 @@ osmium_gen_projected = function() {
 		});
 
 		/* Update the target in CLF */
-		var tkey = info.target.data('key');
-		var skey = info.source.closest('div.pr-loadout').data('key');
-		var stid = info.source.data('typeid');
-		var sidx = info.source.data('index');
+		var tkey = tgt.data('key');
+		var skey = src.closest('div.pr-loadout').data('key');
+		var stid = src.data('typeid');
+		var sidx = src.data('index');
 		var clf;
 
 		if(skey === 'local') {
@@ -100,11 +102,11 @@ osmium_gen_projected = function() {
 			if(m[i].typeid === stid && m[i].index === sidx) {
 				m[i]['X-Osmium-target'] = tkey;
 				osmium_commit_undo_deferred();
-				info.source.addClass('hastarget');
-				info.source.append(
+				src.addClass('hastarget');
+				src.append(
 					$(document.createElement('div'))
 						.addClass('bghue')
-						.css('background-color', info.source.closest('div.pr-loadout').css('border-color'))
+						.css('background-color', src.closest('div.pr-loadout').css('border-color'))
 				);
 				return;
 			}
@@ -113,10 +115,12 @@ osmium_gen_projected = function() {
 		alert('Could not create connection in CLF – please report!');
 	});
 	jsPlumb.bind("connectionDetached", function(info) {
+		var src = $(info.source);
+
 		/* Delete the target in CLF */
-		var skey = info.source.closest('div.pr-loadout').data('key');
-		var stid = info.source.data('typeid');
-		var sidx = info.source.data('index');
+		var skey = src.closest('div.pr-loadout').data('key');
+		var stid = src.data('typeid');
+		var sidx = src.data('index');
 		var clf;
 
 		if(skey === 'local') {
@@ -130,8 +134,8 @@ osmium_gen_projected = function() {
 			if(m[i].typeid === stid && m[i].index === sidx) {
 				m[i]['X-Osmium-target'] = false;
 				osmium_commit_undo_deferred();
-				info.source.children('div.bghue').remove();
-				info.source.removeClass('hastarget');
+				src.children('div.bghue').remove();
+				src.removeClass('hastarget');
 				return;
 			}
 		}
@@ -459,10 +463,6 @@ osmium_init_projected = function() {
 				});
 			});
 		});
-	});
-
-	$("section#remote").on('made_visible', function() {
-		jsPlumb.repaintEverything();
 	});
 };
 

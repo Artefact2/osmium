@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -77,7 +77,7 @@ while($row = \Osmium\Db\fetch_assoc($q)) {
 	$mgid = $row['mgid0'] === null ? 0 : (int)$row['mgid0'];
 	$mgname = $mgid === 0 ? 'Uncategorized types' : $row['mgname0'];
 
-	if(!isset($flatgroups[$mgid])) {
+	if(!isset($flatgroups[$mgid]['name'])) {
 		$flatgroups[$mgid] = array(
 			'name' => $mgname,
 			'children' => array(),
@@ -97,6 +97,7 @@ while($row = \Osmium\Db\fetch_assoc($q)) {
 		$row['other'],
 		(int)$row['parenttypeid'],
 		(int)$projectable,
+		$mgid,
 		(int)$row['metalevel'], /* Will be popped after sorting */
 	);
 }
@@ -116,8 +117,8 @@ foreach($flatgroups as $k => $g) {
 			$t = $flatgroups['types'][$t];
 
 			if(!isset($maxmetalevels[$t[4]])
-			   || $maxmetalevels[$t[4]] < $t[9]) {
-				$maxmetalevels[$t[4]] = $t[9];
+			   || $maxmetalevels[$t[4]] < $t[10]) {
+				$maxmetalevels[$t[4]] = $t[10];
 			}
 		}
 
@@ -137,7 +138,7 @@ foreach($flatgroups as $k => $g) {
 			}
 
 			/* Then sort the meta groups by meta level */
-			$ret = $x[9] - $y[9];
+			$ret = $x[10] - $y[10];
 			if($ret !== 0) return $ret;
 
 			/* Finally, sort by name */
@@ -148,6 +149,15 @@ foreach($flatgroups as $k => $g) {
 
 foreach($flatgroups['types'] as &$t) {
 	array_pop($t); /* Get rid of meta level */
+}
+
+foreach($flatgroups as $id => $g) {
+	if(!isset($g['children'])) continue;
+	foreach($g['children'] as $c) {
+		if(isset($flatgroups[$c]) && !isset($flatgroups[$c]['parent'])) {
+			$flatgroups[$c]['parent'] = $id;
+		}
+	}
 }
 
 $static['groups'] = $flatgroups;

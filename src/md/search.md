@@ -48,7 +48,7 @@ queries:
 <tfoot></tfoot>
 <tbody>
 <tr><td>ship</td><td>string</td><td>The name of the ship</td></tr>
-<tr><td>groups</td><td>string</td><td>A list of group names</td></tr>
+<tr><td>shipgroup</td><td>string</td><td>The groupname of the ship</td></tr>
 <tr><td>author</td><td>string</td><td>The name of the author</td></tr>
 <tr><td>name</td><td>string</td><td>The loadout name</td></tr>
 <tr><td>description</td><td>string</td><td>The loadout description</td></tr>
@@ -87,12 +87,12 @@ other operators will throw an error.
 * `@tags "shield-tank" "passive-tank"` [(try
   it)](../search?q=%40tags+"shield-tank"+"passive-tank")
 
-* `@groups Cruiser -Strategic -Heavy @dps >= 500` [(try
-  it)](../search?q=%40groups+Cruiser+-Strategic+-Heavy+%40dps+>%3D+500)
+* `@shipgroup Cruiser -Strategic -Heavy @dps >= 500` [(try
+  it)](../search?q=%40shipgroup+Cruiser+-Strategic+-Heavy+%40dps+>%3D+500)
 
-* `@tags pve|missions|l4 @groups battleship @estimatedprice <= 300m`
+* `@tags pve|missions|l4 @shipgroup battleship @estimatedprice <= 300m`
   [(try
-  it)](../search?q=%40tags+pve%7Cmissions%7Cl4+%40groups+battleship+%40estimatedprice+<%3D+300m)
+  it)](../search?q=%40tags+pve%7Cmissions%7Cl4+%40shipgroup+battleship+%40estimatedprice+<%3D+300m)
 
 ## When searching types {#types}
 

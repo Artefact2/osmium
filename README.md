@@ -43,3 +43,8 @@ Osmium uses js-deflate, released under the GNU General Public License,
 version 2.
 <https://github.com/dankogai/js-deflate/blob/master/rawdeflate.js>
 
+Background image: "[706 - Stars - Seamless
+Pattern](https://secure.flickr.com/photos/zooboing/4594422812/)", by
+[Patrick Hoesly](https://secure.flickr.com/photos/zooboing/), used
+under [CC-BY-2.0](https://creativecommons.org/licenses/by/2.0/),
+desaturated from original.

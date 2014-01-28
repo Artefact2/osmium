@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -65,7 +65,7 @@ function get_ini_setting($key) {
 	static $cnf = null;
 	if($cnf === null) {
 		if(!file_exists(INI_CONFIGURATION_FILE) || !is_readable(INI_CONFIGURATION_FILE)) {
-			fatal(500, "Configuration file '".INI_CONFIGURATION_FILE."' not found or not readable.");
+			fatal(500, "Configuration file <code>'".INI_CONFIGURATION_FILE."'</code> not found or not readable.");
 		}
 		/* Maybe cache this in memory? Parsing ini files is pretty
 		 * much as fast as deserialization and the file will be in
@@ -107,7 +107,7 @@ function curl_init_branded() {
 	return $c;
 }
 
-function fatal($code, $message) {
+function fatal($code, $message = '', $title = null, $showbt = null, $die = true) {
 	/* Don't halt script execution if used with the shutup (@)
 	 * operator */
 	if(error_reporting() === 0) return;
@@ -116,45 +116,67 @@ function fatal($code, $message) {
 		http_response_code($code);
 	}
 
-	$message = "It appears you have reached a fatal error.\n\n"
-		."The provided message was: {$message}.\n"
-		."The returned HTTP code is: {$code}.\n\n"
-		."If you believe this is a bug in the code or a system issue, please report it.\n\n"
-		."If you decide to report the issue, please include the following debug backtrace:";
+	require_once __DIR__.'/root.php';
 
-	$l = strlen($message);
-	for($i = 0; $i < $l; ++$i) {
-		for($j = 0; $j < 8; ++$j) {
-			$z = 1;
+	$escape = function_exists('Osmium\Chrome\escape') ? 'Osmium\Chrome\escape' : 'htmlspecialchars';
 
-			if((mt_rand() % 1024) === 0) {
-				$message[$i] = chr(ord($message[$i]) ^ $z);
-			}
+	static $internaltitles = [
+		"He's dead, Jim!",
+		"Internal user error",
+		"Oh noes!",
+		"Spline reticulation error",
+		"What could go wrong?",
+		"Segmentation fault",
+		"Nice job, user. You broke it.",
+		"I don't know what I expected.",
+		"Acute hamster failure",
+		"You just lost the game.",
+		"Sorry.",
+	];
 
-			$z <<= 1;
-		}
+	if($showbt === null) $showbt = ($code >= 500);
+	if($title === null && $code >= 500) $title = $internaltitles[time() % count($internaltitles)];
+	$hue = ($code >= 400 && $code < 500) ? 10 : 210;
+
+	$relprefix = rtrim(get_ini_setting('relative_path'), '/');
+
+	echo "<!DOCTYPE html>\n<html xmlns='http://www.w3.org/1999/xhtml'>\n<head>\n";
+	echo "<meta name='robots' content='noindex' />\n";
+	echo "<meta charset='utf-8' />\n";
+	echo "<link href='//fonts.googleapis.com/css?family=Droid+Serif:400,400italic,700,700italic|Droid+Sans:400,700|Droid+Sans+Mono' rel='stylesheet' type='text/css' />\n";
+	echo "<link rel='stylesheet' href='".$relprefix."/static-".\Osmium\CSS_STATICVER."/fatal.css' type='text/css' />\n";
+	echo "<title>{$code} / Osmium</title>\n";
+	echo "</head>\n<body style='background: hsl({$hue}, 80%, 10%);'><div class='bg'></div>\n<div class='w'>\n";
+
+	if($title) {
+		echo "<h1>{$title}</h1>\n";
+	} else {
+		echo "<h1 class='code'>{$code}</h1>\n";
 	}
 
-	$message .= "\n";
+	if($message !== '') {
+		echo "<p>{$message}</p>\n";
+	}
 
-	$k = 0;
-	foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10) as $c) {
-		$message .= '\\'.$c['function'].'() called from '.$c['file'].':'.$c['line']."\n";
+	echo "<p class='home'><a href='{$relprefix}/'><strong>Return to the main page</strong></a></p>\n";
+
+	if($showbt) {
+		echo "<p>This issue has been logged.<br />Please report it to the developers and describe the steps to reproduce this issue. Thanks!</p>\n";
+		$bt = '';
+		foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10) as $c) {
+			$bt .= '\\'.$c['function'].'() called from '.$c['file'].':'.$c['line']."\n";
+		}
+		echo "<pre class='bt'>".$escape($bt)."</pre>\n";
 	}
 
 	list($msec, $sec) = explode(' ', microtime(), 2);
-	$message .= "\n".gethostname().' '.date('Y-m-d H:i:s', $sec).rtrim(substr($msec, 1), "0")."\n";
+	$footer = gethostname().' – '.date('Y-m-d H:i:s', $sec).rtrim(substr($msec, 1), "0");
 
-	if(php_sapi_name() === 'cli') {
-		echo $message."\n";
-	} else {
-		echo "<!DOCTYPE html>\n<html>\n<head>\n"
-			."<title>{$code} / Osmium</title>\n"
-			."</head>\n<body>\n<pre>"
-			.htmlspecialchars($message)
-			."</pre>\n"
-			."</body>\n</html>\n";
+	echo "<footer><pre>".$escape($footer)."</pre></footer>\n";
+
+	echo "</div></body>\n</html>\n";
+
+	if($die) {
+		die((int)$code);
 	}
-
-	die((int)$code);
 }

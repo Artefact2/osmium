@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,6 +26,9 @@ const NOTIFICATION_TYPE_LOADOUT_COMMENTED = 101;
 
 /** A loadout comment has been replied to */
 const NOTIFICATION_TYPE_COMMENT_REPLIED = 102;
+
+/** An account's API key was disabled due to errors. */
+const NOTIFICATION_TYPE_ACCOUNT_API_KEY_DISABLED = 200;
 
 function add_notification($type, $fromaccountid, $destaccountid,
                           $targetid1 = null, $targetid2 = null, $targetid3 = null) {
@@ -80,7 +83,7 @@ function get_notifications($callback, $newonly = false) {
 		a.characterid, a.charactername, a.ismoderator,
 		l.visibility, l.privatetoken
 		FROM osmium.notifications AS n
-		JOIN osmium.accounts AS a ON n.fromaccountid = a.accountid
+		LEFT JOIN osmium.accounts AS a ON n.fromaccountid = a.accountid
 		LEFT JOIN osmium.loadouts l ON (n.type = $3 AND n.targetid1 = l.loadoutid)
 		OR (n.type = $4 AND n.targetid2 = l.loadoutid)
 		OR (n.type = $5 AND n.targetid3 = l.loadoutid)
@@ -136,7 +139,15 @@ function get_notification_body($row) {
 			." has replied to one of your comments on loadout <a href='./"
 			.$uri."'>#".$loadoutid."</a>. <a href='./".$uri."?jtc="
 			.$commentid."#r".$replyid."'>View reply</a>";
-	} else {
+	} else if($type == NOTIFICATION_TYPE_ACCOUNT_API_KEY_DISABLED) {
+		$keyid = (int)$row['targetid1'];
+
+		return "Your API key (KeyID ".$keyid
+			.") has been disabled. Maybe it expired or no longer had correct permissions.";
+	}
+
+
+	else {
 		return 'Unknown notification type '.intval($type);
 	}
 }

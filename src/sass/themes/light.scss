@@ -35,8 +35,8 @@ $placeholder-text-color: hsl(0, 0%, 50%);
 
 $overflow-text-color: hsl(0, 80%, 40%);
 
-$anchor-target-highlight-bg-color: hsl(200, 100%, 90%);
-$anchor-target-final-bg-color: $main-bg-color;
+$anchor-target-highlight-bg-color: hsla(200, 100%, 90%, 0.8);
+$anchor-target-final-bg-color: transparent;
 
 $modal-border-color: rgba($main-bg-color, 0.5);
 $modal-bg-color: $main-bg-color;
@@ -178,7 +178,9 @@ $loadout-comment-reply-meta-text-color: $loadout-comment-meta-text-color;
 
 $loadout-comment-reply-active-meta-text-color: $loadout-comment-meta-text-color;
 
-$loadout-list-odd-bg-color: lighten($main-bg-color, 3%);
+$loadout-list-odd-bg-color: rgba(lighten($main-bg-color, 3%), 0.5);
+
+$missing-skill-text-color: hsl(30, 100%, 40%);
 
 //
 // Notifications
@@ -213,6 +215,9 @@ $flag-abusive-bg-color: hsl(0, 100%, 80%);
 
 $reputation-gain-text-color: hsl(120, 100%, 50%);
 $reputation-loss-text-color: hsl(0, 100%, 50%);
+
+$privilege-progress-bg-color: $subsection-bg-color;
+$privilege-progress-done-bg-color: $reputation-gain-text-color;
 
 /////////////////////////////////////
 

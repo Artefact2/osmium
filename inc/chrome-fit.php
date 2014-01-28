@@ -1,6 +1,7 @@
 <?php
 /* Osmium
  * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2013 Josiah Boning <jboning@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,6 +44,131 @@ function print_formatted_attribute_category($identifier, $title, $titledata, $ti
 	echo "<h4$titleclass>$title <small>$titledata</small></h4>\n";
 	echo "<div>\n$contents</div>\n";
 	echo "</section>\n";
+}
+
+function print_nested_skill_requirements($typeid, $level, array &$skills, array $tree, array $invtree) {
+	if(isset($tree[$typeid])) {
+		foreach($tree[$typeid] as $stid => $sl) {
+			if(!isset($skills[$stid])) continue;
+			$ml = $skills[$stid];
+			unset($skills[$stid]);
+
+			print_nested_skill_requirements($stid, $ml, $skills, $tree, $invtree);
+		}
+	}
+
+	echo "<li>\n";
+
+	echo \Osmium\Fit\get_typename($typeid)." ".format_skill_level($level);
+
+	if(isset($invtree[$typeid])) {
+		$reqs = [];
+
+		foreach($invtree[$typeid] as $tid) {
+			$reqs[] = escape(\Osmium\Fit\get_typename($tid));
+		}
+
+		if($reqs !== []) {
+			echo "<div class='reqs'>Required by ".implode(', ', $reqs)."</div>";
+		}
+	}
+
+	echo "</li>\n";
+}
+
+function print_formatted_mastery(&$fit, $relative, array $prereqs_per_type) {
+	ob_start();
+
+	$types_per_prereqs = [];
+	$prereqs_unique = [];
+	$missing_unique = [];
+	$missingsp = 0;
+	$totalsp = 0;
+
+	foreach($prereqs_per_type as $tid => $arr) {
+		foreach($arr as $stid => $level) {
+			if(isset($prereqs_unique[$stid])) {
+				if($prereqs_unique[$stid] < $level) {
+					$prereqs_unique[$stid] = $level;
+				} else {
+					unset($prereqs_per_type[$tid][$stid]);
+				}
+			} else {
+				$prereqs_unique[$stid] = $level;
+			}
+		}
+	}
+
+	foreach($prereqs_per_type as $typeid => $arr) {
+		foreach($arr as $stid => $level) {
+			$types_per_prereqs[$stid][$typeid] = true;
+		}
+	}
+
+	$sp = function($level, $rank) {
+		if($level == 0) return 0;
+		return ceil(pow(2, 2.5 * ($level - 1.0)) * 250.0 * $rank);
+	};
+
+	foreach($prereqs_unique as $stid => $level) {
+		$current = isset($fit['skillset']['override'][$stid])
+			? $fit['skillset']['override'][$stid] : $fit['skillset']['default'];
+
+		$rank = \Osmium\Fit\get_skill_rank($stid);
+		$needed = ceil(250.0 * $rank * pow(2, 2.5 * ($level - 1.0)));
+
+		$totalsp += $needed;
+
+		if($current >= $level) {
+			continue;
+		}
+
+		$missing_unique[$stid] = $level;
+		$missingsp += $needed - ceil(250.0 * $rank * ($current ? pow(2, 2.5 * ($current - 1.0)) : 0));
+	}
+
+	foreach($types_per_prereqs as &$arr) {
+		$arr = array_reverse(array_keys($arr));
+	}
+
+	if($missing_unique === []) {
+		echo "<p class='placeholder'>No missing skills with current skillset ("
+			.escape($fit['skillset']['name']).").</p>\n";
+	}
+
+	if($missing_unique !== []) {
+		echo "<h5>Missing skillpoints</h5>\n";
+		echo "<ul>\n";
+
+		echo "<li>".format_integer($missingsp)." SP missing out of ".format_integer($totalsp)." SP required</li>\n";
+		$secs = $missingsp / (45.0 / 60.0);
+		echo "<li>approximately ".format_long_duration($secs, 2)." of training time</li>\n";
+
+		echo "</ul>\n";
+	}
+
+	if($missing_unique !== []) {
+		echo "<h5>Missing skills</h5>\n";
+		echo "<ul>\n";
+
+		while($missing_unique !== []) {
+			reset($missing_unique);
+			$typeid = key($missing_unique);
+			$level = $missing_unique[$typeid];
+			unset($missing_unique[$typeid]);
+
+			print_nested_skill_requirements($typeid, $level, $missing_unique, $prereqs_per_type, $types_per_prereqs);
+		}
+
+		echo "</ul>\n";
+	}
+
+	print_formatted_attribute_category(
+		'mastery', 'Mastery',
+		"<span title='Effective skillset'>".escape($fit['skillset']['name'])."</span>",
+		($missingsp > 0) ? 'overflow' : '',
+		ob_get_clean()
+	);
 }
 
 function print_formatted_engineering(&$fit, $relative, $capacitor) {
@@ -355,7 +481,7 @@ function print_formatted_navigation(&$fit, $relative) {
 	$maxvelocity = round(\Osmium\Dogma\get_ship_attribute($fit, 'maxVelocity'));
 	$agility = \Osmium\Dogma\get_ship_attribute($fit, 'agility');
 	$aligntime = -log(0.25) * \Osmium\Dogma\get_ship_attribute($fit, 'mass') * $agility / 1000000;
-	$warpspeed = \Osmium\Dogma\get_ship_attribute($fit, 'warpSpeedMultiplier') * 3.0;
+	$warpspeed = \Osmium\Dogma\get_ship_attribute($fit, 'warpSpeedMultiplier') * \Osmium\Dogma\get_ship_attribute($fit, 'baseWarpSpeed');
 	$warpstrength = -\Osmium\Dogma\get_ship_attribute($fit, 'warpScrambleStatus');
 	$fpoints = 'point'.(abs($warpstrength) == 1 ? '' : 's');
 
@@ -517,6 +643,9 @@ function print_formatted_loadout_attributes(&$fit, $relative = '.', $opts = arra
 	$ehp = isset($opts['ehp']) ? $opts['ehp'] :
 		\Osmium\Fit\get_ehp_and_resists($fit);
 
+	$prereqs = isset($opts['prerequisites']) ? $opts['prerequisites'] :
+		\Osmium\Fit\get_skill_prerequisites_and_missing_prerequisites($fit)[0];
+
 	print_formatted_engineering($fit, $relative, $cap);
 	print_formatted_offense($fit, $relative, $ia, $flags & FATTRIBS_USE_RELOAD_TIME_FOR_DPS);
 	print_formatted_defense($fit, $relative, $ehp, $cap, $flags & FATTRIBS_USE_RELOAD_TIME_FOR_TANK);
@@ -524,6 +653,7 @@ function print_formatted_loadout_attributes(&$fit, $relative = '.', $opts = arra
 	print_formatted_outgoing($fit, $relative);
 	print_formatted_navigation($fit, $relative);
 	print_formatted_targeting($fit, $relative);
+	print_formatted_mastery($fit, $relative, $prereqs);
 	print_formatted_misc($fit);
 }
 
@@ -562,8 +692,7 @@ function print_loadout_common_footer(&$fit, $relative, $clftoken) {
 	));
 
 	/* If these scripts change, update the license info in about.php */
-	/* XXX: update to 1.5.x as soon as possible and restore XHTML mode */
-	include_js("//cdnjs.cloudflare.com/ajax/libs/jsPlumb/1.4.1/jquery.jsPlumb-1.4.1-all-min.js");
+	include_js($relative."/static-1/jquery.jsPlumb-1.5.4-min.js");
 	include_js($relative."/static-1/rawdeflate.min.js");
 
 	print_js_snippet('tabs');

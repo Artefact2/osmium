@@ -1,5 +1,5 @@
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -216,7 +216,7 @@ osmium_add_module = function(typeid, index, state, chargeid) {
 	li.data('slottype', m[3]);
 	li.data('index', index);
 	li.data('state', state);
-	li.text(m[1]);
+	li.append($(document.createElement('span')).addClass('name').text(m[1]));
 	li.prop('title', m[1]);
 
 	img = $(document.createElement('img'));
@@ -664,6 +664,17 @@ osmium_add_module = function(typeid, index, state, chargeid) {
 			}, { icon: osmium_module_state_names['overloaded'][1] });
 
 			osmium_ctxmenu_add_separator(menu);
+		}
+
+		if(!osmium_loadout_readonly) {
+			if(hascharges && li.data('chargetypeid') !== null) {
+				osmium_add_generic_browse_mg(menu, typeid,
+											 { title: "Browse market group (m)" });
+				osmium_add_generic_browse_mg(menu, li.data('chargetypeid'),
+											 { title: "Browse market group (c)" });
+			} else {
+				osmium_add_generic_browse_mg(menu, typeid);
+			}
 		}
 
 		osmium_ctxmenu_add_option(menu, "Show module info", function() {

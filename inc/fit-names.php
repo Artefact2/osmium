@@ -27,13 +27,16 @@ const EFFECT_TargetArmorRepair = 592;
 const EFFECT_TargetAttack = 10;
 const EFFECT_UseMissiles = 101;
 
+const ATT_Boosterness = 1087;
 const ATT_HiSlots = 14;
+const ATT_Implantness = 331;
 const ATT_LauncherSlotsLeft = 101;
 const ATT_LowSlots = 12;
 const ATT_MedSlots = 13;
 const ATT_ReloadTime = 1795;
 const ATT_ScanResolution = 564;
 const ATT_SignatureRadius = 552;
+const ATT_SkillTimeConstant = 275;
 const ATT_TurretSlotsLeft = 102;
 const ATT_UpgradeLoad = 1152;
 
@@ -44,6 +47,7 @@ const TYPE_100MNMicrowarpdriveII = 12084;
 const GROUP_Booster = 303;
 const GROUP_FighterBomber = 1023;
 const GROUP_FighterDrone = 549;
+
 
 
 /** @internal */
@@ -150,4 +154,89 @@ function get_groupname($groupid) {
 	return get_cached_thing_generic(
 		'eve.invgroups', 'groupname', 'groupid', (int)$groupid
 	);
+}
+
+function get_required_skills($typeid) {
+	$typeid = (int)$typeid;
+	$key = 'NameCache_required_skills_'.$typeid;
+	$cache = \Osmium\State\get_cache_memory($key);
+
+	if($cache !== null) {
+		return $cache;
+	}
+
+	static $rs = [
+		182 => 277, /* RequiredSkill1 => RequiredSkill1Level */
+		183 => 278, /* etc… */
+		184 => 279,
+		1285 => 1286,
+		1289 => 1287,
+		1290 => 1288,
+	];
+
+	$vals = [];
+
+	static $ctx = null;
+	if($ctx === null) dogma_init_context($ctx);
+
+	/* XXX: this is hackish */
+	dogma_init_context($ctx);
+	dogma_set_ship($ctx, $typeid);
+	foreach($rs as $rsattid => $rslattid) {
+		if(dogma_get_ship_attribute($ctx, $rsattid, $skill) === DOGMA_OK
+		   && dogma_get_ship_attribute($ctx, $rslattid, $level) === DOGMA_OK) {
+			if($skill > 0 && $level > 0) {
+				$vals[$skill] = $level;
+			}
+		}
+	}
+
+	\Osmium\State\put_cache_memory($key, $vals, 86400);
+	return $vals;
+}
+
+function get_implant_slot($typeid) {
+	$typeid = (int)$typeid;
+	$key = 'NameCache_implantness_'.$typeid;
+	$cache = \Osmium\State\get_cache_memory($key);
+
+	if($cache !== null) {
+		return $cache;
+	}
+
+	static $ctx = null;
+	if($ctx === null) dogma_init_context($ctx);
+
+	/* XXX */
+	dogma_set_ship($ctx, $typeid);
+
+	if(get_groupid($typeid) == GROUP_Booster) {
+		dogma_get_ship_attribute($ctx, ATT_Boosterness, $slot);
+	} else {
+		dogma_get_ship_attribute($ctx, ATT_Implantness, $slot);
+	}
+
+	\Osmium\State\put_cache_memory($key, $slot, 86400);
+	return $slot;
+}
+
+function get_skill_rank($typeid) {
+	$typeid = (int)$typeid;
+	$key = 'NameCache_skill_rank_'.$typeid;
+	$cache = \Osmium\State\get_cache_memory($key);
+
+	if($cache !== null) {
+		return $cache;
+	}
+
+	static $ctx = null;
+	if($ctx === null) dogma_init_context($ctx);
+
+	/* XXX */
+	dogma_set_ship($ctx, $typeid);
+
+	dogma_get_ship_attribute($ctx, ATT_SkillTimeConstant, $rank);
+
+	\Osmium\State\put_cache_memory($key, $rank, 86400);
+	return $rank;
 }

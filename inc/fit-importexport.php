@@ -466,7 +466,7 @@ function try_parse_fit_from_eft_format($eftstring, &$errors) {
 		} else {
 			$slottype = \CommonLoadoutFormat\get_module_slottype($moduleid);
 			if($slottype === 'unknown') {
-				$errors[] = 'Type "'.$type.'" is neither a drone nor a module. Discarded.';
+				$errors[] = 'Type "'.$module.'" is neither a drone nor a module. Discarded.';
 				continue;
 			}
 

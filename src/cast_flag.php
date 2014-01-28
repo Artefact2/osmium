@@ -21,7 +21,7 @@ namespace Osmium\Page\CastFlag;
 require __DIR__.'/../inc/root.php';
 
 if(!\Osmium\State\is_logged_in()) {
-	\Osmium\fatal(403, "Forbidden.");
+	\Osmium\fatal(403);
 }
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -52,7 +52,7 @@ if($type == 'loadout') {
 
 		$row = \Osmium\Db\fetch_assoc(\Osmium\Db\query_params('SELECT loadoutid FROM osmium.loadoutcomments WHERE commentid = $1', array($id)));
 		if($row === false) {
-			\Osmium\fatal(404, "Comment not found.");
+			\Osmium\fatal(404);
 		}
 
 		$loadoutid = $otherid1 = $row['loadoutid'];
@@ -63,7 +63,7 @@ if($type == 'loadout') {
 
 		$row = \Osmium\Db\fetch_assoc(\Osmium\Db\query_params('SELECT lcr.commentid, loadoutid FROM osmium.loadoutcommentreplies AS lcr JOIN osmium.loadoutcomments AS lc ON lc.commentid = lcr.commentid WHERE commentreplyid = $1', array($id)));
 		if($row === false) {
-			\Osmium\fatal(404, "Comment reply not found.");
+			\Osmium\fatal(404);
 		}
 
 		$commentid = $otherid1 = $row['commentid'];
@@ -76,16 +76,16 @@ if($type == 'loadout') {
 
 	$options[\Osmium\Flag\FLAG_SUBTYPE_NOT_CONSTRUCTIVE] = array('Not constructive', 'This comment is useless, or brings nothing new or interesting to the loadout.');
 } else {
-	\Osmium\fatal(404, "Incorrect type.");
+	\Osmium\fatal(400);
 }
 
 $fit = \Osmium\Fit\get_fit($loadoutid);
 
 if($fit === false) {
-	\Osmium\fatal(404, "get_fit() returned false, please report!");
+	\Osmium\fatal(500, "get_fit() returned false, please report!");
 }
 if(!\Osmium\Flag\is_fit_flaggable($fit)) {
-	\Osmium\fatal(403, "You cannot flag this.");
+	\Osmium\fatal(400);
 }
 
 $options[\Osmium\Flag\FLAG_SUBTYPE_OFFENSIVE] = array('Offensive');

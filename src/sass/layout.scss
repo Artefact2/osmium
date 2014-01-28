@@ -67,12 +67,27 @@ $nav-height: 2.5em;
 	}
 }
 
+@mixin shorter-text-available {
+	&.mini { display: none; }
+	&.narrow { display: none; }
+
+	@include layout-type(small) {
+		&.full { display: none; }
+		&.mini { display: inline; }
+	}
+
+	@include layout-type(normal) {
+		&.wide { display: none; }
+		&.narrow { display: inline; }
+	}
+}
+
 html, body {
 	margin: 0;
 	padding: 0;
 	height: 100%;
 	color: $main-text-color;
-	background: url('./bg.png'), $main-bg-color;
+	background: url('./bg.png'), url('./starbg.jpg');
 }
 
 section, header, nav {
@@ -107,7 +122,68 @@ div#wrapper {
 		padding-top: 0;
 	}
 
-	background-color: rgba($main-bg-color, 0.8);
+	background: rgba($main-bg-color, 0.85);
+
+	&> div#glob_feedback {
+		position: fixed;
+		right: -30em;
+		bottom: 8em;
+		border: 1px solid $section-border-color;
+		background-color: rgba($main-bg-color, 0.9);
+		z-index: 5000000;
+
+		height: 8em;
+		padding-left: 2em;
+
+		&> span {
+			font-weight: bold;
+			display: block;
+			text-align: center;
+			-webkit-transform: rotate(-90deg);
+			-moz-transform: rotate(-90deg);
+			transform: rotate(-90deg);
+			-webkit-transform-origin: center center;
+			-moz-transform-origin: center center;
+			transform-origin: center center;
+			position: absolute;
+			width: 8em;
+			height: 8em;
+			line-height: 8em;
+			top: 0;
+			left: -3em;
+			cursor: pointer;
+
+			&:before { content: "▲ "; }
+		}
+
+		&.extended {
+			right: -1px;
+
+			&> span:before { content: "▼ "; }
+		}
+
+		&> ul {
+			padding: 0;
+			margin: 0;
+
+			&> li {
+				width: 8em;
+				height: 8em;
+				line-height: 6em;
+				display: inline-block;
+				text-align: center;
+				padding: 1em;
+
+				&> a {
+					vertical-align: middle;
+					display: inline-block;
+					font-size: 1.5em;
+					font-weight: bold;
+					line-height: 1em;
+				}
+			}
+		}
+	}
 }
 
 footer, div#push {
@@ -132,18 +208,7 @@ div#wrapper > nav:first-child {
 	@include linear-gradient-lighten-top($top-navigation-bg-color, 15%);
 
 	span {
-		&.mini { display: none; }
-		&.narrow { display: none; }
-
-		@include layout-type(small) {
-			&.full { display: none; }
-			&.mini { display: inline; }
-		}
-
-		@include layout-type(normal) {
-			&.wide { display: none; }
-			&.narrow { display: inline; }
-		}
+		@include shorter-text-available;
 	}
 
 	&> ul {
@@ -526,6 +591,14 @@ div#mdstatic {
 	&> h2 {
 		margin-top: 3em;
 	}
+}
+
+p.nohttps {
+	font-size: 1.2em;
+	display: inline-block;
+	text-align: left;
+	padding: 1em;
+	margin: 0.5em;
 }
 
 div.spinner, span.spinner {

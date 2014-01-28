@@ -27,6 +27,7 @@ $limit = isset($_GET['limit']) ? $_GET['limit'] : 25;
 $offset = isset($_GET['offset']) ? $_GET['offset'] : 0;
 $sortby = isset($_GET['sortby']) ? $_GET['sortby'] : 'relevance';
 
+/* XXX: complete the list using inc/search.php */
 $sorts = array(
 	'creationdate' => 'ORDER BY updatedate DESC', /* Not a typo */
 	'score' => 'ORDER BY score DESC',
@@ -73,6 +74,7 @@ if(isset($_GET['buildmax'])) {
 $ids = \Osmium\Search\get_search_ids($query, $cond, $offset, $limit);
 $ids[] = -1;
 
+/* XXX: use loadoutssearchresults */
 $q = \Osmium\Db\query(
 'SELECT l.loadoutid, l.visibility, f.name, f.hullid, stn.typename, lh.updatedate,
 a.nickname, a.charactername, a.apiverified,

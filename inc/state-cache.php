@@ -113,6 +113,9 @@ function put_cache($key, $value, $expires = 0, $prefix = 'OsmiumCache_') {
 	if(!$__osmium_cache_enabled) return;
 
 	if($expires > 0) $expires = time() + $expires;
+	if($expires < 0) {
+		trigger_error("Got a negative ttl in put_cache({$key}): {$expires}", E_USER_WARNING);
+	}
 
 	$f = get_cache_file($key, $prefix);
     return file_put_contents($f, serialize($value)) && touch($f, $expires);

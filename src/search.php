@@ -52,6 +52,6 @@ if($query === false) {
 	\Osmium\Search\print_search_form(null, '.', $title);
 	echo "</div>\n";
 
-	\Osmium\Search\print_pretty_results('.', $query, $cond, true, 15);
+	\Osmium\Search\print_pretty_results('.', $query, $cond, true, 24);
 	\Osmium\Chrome\print_footer();
 }

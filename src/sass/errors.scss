@@ -16,7 +16,8 @@
 	@include error;
 	border: none;
 	color: $notice-text-color;
-	text-decoration: underline;
+	font-style: italic;
+	border: 1px dotted $section-border-color;
 }
 
 p.error_box {
