@@ -528,7 +528,6 @@ function sanitize_html($html) {
 		$config->set('Attr.AllowedClasses', array());
 		$config->set('HTML.Nofollow', true);
 		$config->set('CSS.AllowedProperties', array());
-		$config->set('AutoFormat.DisplayLinkURI', true);
 		$config->set('AutoFormat.Linkify', true);
 
 		$purifier = new \HTMLPurifier($config);
@@ -554,7 +553,6 @@ function sanitize_html_phrasing($html) {
 		$config->set('HTML.Nofollow', true);
 		$config->set('CSS.AllowedProperties', array());
 		$config->set('HTML.AllowedElements', 'a, abbr, b, cite, code, del, em, i, ins, kbd, q, s, samp, small, span, strong, sub, sup');
-		$config->set('AutoFormat.DisplayLinkURI', true);
 		$config->set('AutoFormat.Linkify', true);
 
 		$purifier = new \HTMLPurifier($config);
