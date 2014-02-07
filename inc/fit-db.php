@@ -1188,6 +1188,7 @@ function fetch_fit_uri($loadoutid) {
 function use_default_skillset(&$fit, $a) {
 	if(!isset($a['accountid'])) {
 		use_skillset($fit, array(), 5, 'All V');
+		return 'All V';
 	}
 
 	$row = \Osmium\Db\fetch_assoc(
@@ -1196,7 +1197,11 @@ function use_default_skillset(&$fit, $a) {
 			WHERE accountid = $1 LIMIT 1',
 			array($a['accountid'])
 		));
-	if($row === false) return false; /* No skillsets */
+	if($row === false) {
+		 /* No skillsets */
+		use_skillset($fit, array(), 5, 'All V');
+		return 'All V';
+	}
 
 	$skillset = json_decode($row['importedskillset'], true);
 	$overridden = json_decode($row['overriddenskillset'], true);
