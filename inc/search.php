@@ -377,7 +377,11 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		$class = "undetermined";
 		if ($a) {
 			if ($missing_prereqs) {
-				$class = "not-flyable";
+				if (isset($missing_prereqs[$loadout['hullid']])) {
+					$class = "not-sittable";
+				} else {
+					$class = "sittable";
+				}
 			} else {
 				$class = "flyable";
 			}

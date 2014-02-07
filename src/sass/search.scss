@@ -196,6 +196,9 @@ ol.pagination {
 }
 
 table.loadout_sr {
+	margin-left: auto;
+	margin-right: auto;
+
 	border-spacing: 0 5px;
 	td {
 		padding-left: 6px;
@@ -203,11 +206,15 @@ table.loadout_sr {
 	}
 
 	tr.flyable {
-		background-color: #252;
+		background-color: rgba(102, 255, 102, 0.2);
 	}
 
-	tr.not-flyable {
-		background-color: #522;
+	tr.sittable {
+		background-color: rgba(255, 255, 102, 0.2);
+	}
+
+	tr.not-sittable {
+		background-color: rgba(255, 102, 102, 0.2);
 	}
 
 	tr.undetermined {
@@ -215,31 +222,14 @@ table.loadout_sr {
 	}
 
 	div.dps, div.ehp, div.esp {
-		//position: absolute;
-		//left: -4.75em;
-		//width: 4.25em;
-		@include ellipsis;
 		text-align: right;
 
 		&> span > strong:after {
 			content: " ";
 		}
-
-		//&.dps {
-		//	top: 4.25em;
-		//}
-
-		//&.ehp {
-		//	top: 5.25em;
-		//}
-
-		//&.esp {
-		//	top: 6.25em;
-		//}
 	}
 
 	a.fitname {
-		display: block;
 		@include ellipsis;
 	}
 
