@@ -344,8 +344,15 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 			/* Only write the <ol> tag if there is at least one loadout */
 			//echo "<ol start='".($offset + 1)."' class='loadout_sr'>\n";
 			echo "<table start='".($offset + 1)."' class='loadout_sr'>\n";
-			echo "<tr><td>stats</td><td>icon</td><td>fitname</td><td>tags</td><td>origin</td><td>social</td></tr>\n";
+			echo "<tr><th>Ideal</th><th>Ship</th><th>Name</th><th>Tags</th><th>Author</th><th>Social</th></tr>\n";
 		}
+
+		$fit = \Osmium\Fit\get_fit($loadout['loadoutid']);
+		$a = \Osmium\State\get_state('a');
+		if ($a) {
+			\Osmium\Fit\use_default_skillset($fit, $a);
+		}
+		list($prereqs, $missing_prereqs) = \Osmium\Fit\get_skill_prerequisites_and_missing_prerequisites($fit);
 
 		// XXX code copying
 		list($groupname) = \Osmium\Db\fetch_row(\Osmium\Db\query_params(
@@ -368,11 +375,13 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		$sn = \Osmium\Chrome\escape($loadout['typename']);
 
 		$class = "undetermined";
-		#if ($sn == "Enyo" || $sn == "Inquisitor") {
-		#	$class = "flyable";
-		#} else {
-		#	$class = "not-flyable";
-		#}
+		if ($a) {
+			if ($missing_prereqs) {
+				$class = "not-flyable";
+			} else {
+				$class = "flyable";
+			}
+		}
 		echo "<tr class='$class'>";
 
 		echo "<td>";

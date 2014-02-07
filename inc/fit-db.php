@@ -1180,6 +1180,36 @@ function fetch_fit_uri($loadoutid) {
 }
 
 /**
+ * Grabs a skillset associated with the current account.
+ *
+ * @todo have some proper way to specify the default skillset.
+ * @see use_skillset()
+ */
+function use_default_skillset(&$fit, $a) {
+	if(!isset($a['accountid'])) {
+		use_skillset($fit, array(), 5, 'All V');
+	}
+
+	$row = \Osmium\Db\fetch_assoc(
+		\Osmium\Db\query_params(
+			'SELECT importedskillset, overriddenskillset, name FROM osmium.accountcharacters
+			WHERE accountid = $1 LIMIT 1',
+			array($a['accountid'])
+		));
+	if($row === false) return false; /* No skillsets */
+
+	$skillset = json_decode($row['importedskillset'], true);
+	$overridden = json_decode($row['overriddenskillset'], true);
+	if(!is_array($skillset)) $skillset = array();
+	if(!is_array($overridden)) $overridden = array();
+	foreach($overridden as $typeid => $l) {
+		$skillset[$typeid] = $l;
+	}
+	use_skillset($fit, $skillset, 0, $row['name']);
+	return $row['name'];
+}
+
+/**
  * Parses a skillset title and fetches it using characters of account
  * $a.
  *
