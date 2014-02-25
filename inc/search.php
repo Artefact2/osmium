@@ -341,8 +341,7 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 	while($loadout = \Osmium\Db\fetch_assoc($lquery)) {
 		if($first === true) {
 			$first = false;
-			/* Only write the <ol> tag if there is at least one loadout */
-			//echo "<ol start='".($offset + 1)."' class='loadout_sr'>\n";
+			/* Only write the <table> tag if there is at least one loadout */
 			echo "<table start='".($offset + 1)."' class='loadout_sr'>\n";
 			echo "<tr><th>Ideal</th><th>Ship</th><th>Name</th><th>Tags</th><th>Author</th><th>Social</th></tr>\n";
 		}
@@ -388,7 +387,7 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		}
 		echo "<tr class='$class'>";
 
-		echo "<td>";
+		echo "<td class='ideal'>";
 		$dps = $loadout['dps'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['dps'], 2);
 		$ehp = $loadout['ehp'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['ehp'], 2, 'k');
 		$esp = $loadout['estimatedprice'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['estimatedprice'], 2);
@@ -416,8 +415,8 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		echo "</div>\n";
 		echo "</td>";
 
-		echo "<td>";
-		echo "<a class='fitname' href='{$relative}/{$uri}'>"
+		echo "<td class='fitname'>";
+		echo "<a href='{$relative}/{$uri}'>"
 			.\Osmium\Chrome\escape($loadout['name'])."</a>\n";
 		//echo "<br/><small>[=======     ] 80d25h</small>";
 		//echo "<br/><small>$groupname</small>";
@@ -459,7 +458,6 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 	}
 
 	if($first === false) {
-		#echo "</ol>\n";
 		echo "</table>\n";
 	} else {
 		echo "<p class='placeholder'>".$nothing_message."</p>\n";
