@@ -352,6 +352,8 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 			\Osmium\Fit\use_default_skillset($fit, $a);
 		}
 		list($prereqs, $missing_prereqs) = \Osmium\Fit\get_skill_prerequisites_and_missing_prerequisites($fit);
+		$prereqs_unique = \Osmium\Skills\uniquify_prerequisites($prereqs);
+		$missing_unique = \Osmium\Skills\uniquify_prerequisites($missing_prereqs);
 
 		// XXX code copying
 		list($groupname) = \Osmium\Db\fetch_row(\Osmium\Db\query_params(
@@ -415,11 +417,25 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		echo "</div>\n";
 		echo "</td>";
 
-		echo "<td class='fitname'>";
-		echo "<a href='{$relative}/{$uri}'>"
+		echo "<td>";
+		echo "<a class='fitname' href='{$relative}/{$uri}'>"
 			.\Osmium\Chrome\escape($loadout['name'])."</a>\n";
-		//echo "<br/><small>[=======     ] 80d25h</small>";
-		//echo "<br/><small>$groupname</small>";
+
+		if ($a && $missing_prereqs) {
+			echo "<br />\n";
+			echo "<small>";
+			if (isset($missing_prereqs[$loadout['hullid']])) {
+				error_log("hello 1");
+				list($unused, $hull_needed) = \Osmium\Skills\sum_sp($missing_prereqs[$loadout['hullid']], $fit['skillset']);
+				$h = \Osmium\Chrome\format($hull_needed);
+				echo "Hull in $h SP – ";
+			}
+			error_log("hello 2");
+			list($unused, $all_needed) = \Osmium\Skills\sum_sp($missing_unique, $fit['skillset']);
+			$a = \Osmium\Chrome\format($all_needed);
+			echo "Fit in $a SP";
+			echo "</small>";
+		}
 		echo "</td>";
 
 		echo "<td>";

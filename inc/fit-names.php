@@ -156,45 +156,6 @@ function get_groupname($groupid) {
 	);
 }
 
-function get_required_skills($typeid) {
-	$typeid = (int)$typeid;
-	$key = 'NameCache_required_skills_'.$typeid;
-	$cache = \Osmium\State\get_cache_memory($key);
-
-	if($cache !== null) {
-		return $cache;
-	}
-
-	static $rs = [
-		182 => 277, /* RequiredSkill1 => RequiredSkill1Level */
-		183 => 278, /* etc… */
-		184 => 279,
-		1285 => 1286,
-		1289 => 1287,
-		1290 => 1288,
-	];
-
-	$vals = [];
-
-	static $ctx = null;
-	if($ctx === null) dogma_init_context($ctx);
-
-	/* XXX: this is hackish */
-	dogma_init_context($ctx);
-	dogma_set_ship($ctx, $typeid);
-	foreach($rs as $rsattid => $rslattid) {
-		if(dogma_get_ship_attribute($ctx, $rsattid, $skill) === DOGMA_OK
-		   && dogma_get_ship_attribute($ctx, $rslattid, $level) === DOGMA_OK) {
-			if($skill > 0 && $level > 0) {
-				$vals[$skill] = $level;
-			}
-		}
-	}
-
-	\Osmium\State\put_cache_memory($key, $vals, 86400);
-	return $vals;
-}
-
 function get_implant_slot($typeid) {
 	$typeid = (int)$typeid;
 	$key = 'NameCache_implantness_'.$typeid;
@@ -218,25 +179,4 @@ function get_implant_slot($typeid) {
 
 	\Osmium\State\put_cache_memory($key, $slot, 86400);
 	return $slot;
-}
-
-function get_skill_rank($typeid) {
-	$typeid = (int)$typeid;
-	$key = 'NameCache_skill_rank_'.$typeid;
-	$cache = \Osmium\State\get_cache_memory($key);
-
-	if($cache !== null) {
-		return $cache;
-	}
-
-	static $ctx = null;
-	if($ctx === null) dogma_init_context($ctx);
-
-	/* XXX */
-	dogma_set_ship($ctx, $typeid);
-
-	dogma_get_ship_attribute($ctx, ATT_SkillTimeConstant, $rank);
-
-	\Osmium\State\put_cache_memory($key, $rank, 86400);
-	return $rank;
 }
