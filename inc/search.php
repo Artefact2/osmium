@@ -431,12 +431,10 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 			echo "<br />\n";
 			echo "<small>";
 			if (isset($missing_prereqs[$loadout['hullid']])) {
-				error_log("hello 1");
 				list($unused, $hull_needed) = \Osmium\Skills\sum_sp($missing_prereqs[$loadout['hullid']], $fit['skillset']);
 				$h = \Osmium\Chrome\format($hull_needed);
 				echo "Hull in $h SP – ";
 			}
-			error_log("hello 2");
 			list($unused, $all_needed) = \Osmium\Skills\sum_sp($missing_unique, $fit['skillset']);
 			$a = \Osmium\Chrome\format($all_needed);
 			echo "Fit in $a SP";
@@ -464,7 +462,7 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 
 		echo "<br/><small>".date('Y-m-d', $loadout['updatedate'])."</small><br />\n";
 		echo "</td>";
-      
+
 		echo "<td>";
 		$votes = (abs($loadout['votes']) == 1) ? 'vote' : 'votes';
 		$upvotes = \Osmium\Chrome\format($loadout['upvotes'], -1);

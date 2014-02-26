@@ -85,8 +85,6 @@ function print_formatted_mastery(&$fit, $relative, array $prereqs_per_type) {
 	$missingsp = 0;
 	$totalsp = 0;
 
-	error_log(print_r($prereqs_per_type, true));
-
 	foreach($prereqs_per_type as $tid => $arr) {
 		foreach($arr as $stid => $level) {
 			if(isset($prereqs_unique[$stid])) {
@@ -109,9 +107,6 @@ function print_formatted_mastery(&$fit, $relative, array $prereqs_per_type) {
 
 	$missing_unique = \Osmium\Skills\get_missing_prerequisites_unique($prereqs_unique, $fit['skillset']);
 	list($totalsp, $missingsp) = \Osmium\Skills\sum_sp($prereqs_unique, $fit['skillset']);
-	error_log(print_r($prereqs_per_type, true));
-	error_log(print_r($prereqs_unique, true));
-	error_log(print_r($missing_unique, true));
 
 	foreach($types_per_prereqs as &$arr) {
 		$arr = array_reverse(array_keys($arr));

@@ -187,11 +187,8 @@ function print_footer() {
 
 	/* If these scripts are changed, also change the license
 	 * information in about.php */
-	//echo "<script type='application/javascript' src='//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>\n";
-	//echo "<script type='application/javascript' src='//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js'></script>\n";
-	# XXX changed for offline development
-	echo "<script type='application/javascript' src='/static-".\Osmium\STATICVER."/3rdparty/jquery.min.js'></script>\n";
-	echo "<script type='application/javascript' src='/static-".\Osmium\STATICVER."/3rdparty/jquery-ui.min.js'></script>\n";
+	echo "<script type='application/javascript' src='//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>\n";
+	echo "<script type='application/javascript' src='//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js'></script>\n";
 
 	foreach($__osmium_js_scripts as $script) {
 		echo "<script type='application/javascript' src='{$script}'></script>\n";

@@ -1,7 +1,5 @@
 <?php
 
-// XXX NOPUSH http://osmium/loadout/7 doesn't show Drones V missing wtf???
-
 namespace Osmium\Skills;
 
 function get_required_skills($typeid) {
@@ -89,7 +87,6 @@ function get_skill_prerequisites_for_types(array $types, array &$result) {
 
 function uniquify_prerequisites(array $prereqs) {
 	$prereqs_unique = array();
-	error_log(print_r($prereqs, true));
 	foreach($prereqs as $tid => $arr) {
 		foreach($arr as $stid => $level) {
 			if(isset($prereqs_unique[$stid])) {
