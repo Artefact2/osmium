@@ -306,17 +306,19 @@ function print_pretty_results($relative, $query, $more = '', $paginate = false, 
 		return;
 	}
 
+	$ordered_by_shipgroup = isset($_GET['sort']) && $_GET['sort'] == 'attshipgroup';
+
 	if($paginate) {
 		echo $pageinfo;
 		echo $pageresult;
-		print_loadout_list($ids, $relative, $offset, $message);
+		print_loadout_list($ids, $relative, $offset, $message, $ordered_by_shipgroup);
 		echo $pageresult;
 	} else {
-		print_loadout_list($ids, $relative, $offset, $message);
+		print_loadout_list($ids, $relative, $offset, $message, $ordered_by_shipgroup);
 	}
 }
 
-function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message = 'No loadouts.') {
+function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message = 'No loadouts.', $show_ship_group_sections = false) {
 	if($ids === array()) {
 		echo "<p class='placeholder'>".$nothing_message."</p>\n";
 		return;		
@@ -363,8 +365,12 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 					array($loadout['hullid'])
 					));
 
-		// TODO only do this if ordered by groupname
-		if ($groupname != $last_groupname) {
+		/* TODO: this is a weird special case. It would be cool to take in the
+		 * ordering here and show headers for various orderings (if dps, show
+		 * >0dps, >100dps, >300dps, ...; if creation date, show "today",
+		 * "yesterday", "last week", "last month", ...; etc).
+		 */
+		if ($show_ship_group_sections && $groupname != $last_groupname) {
 			echo "<tr><td colspan='6'>$groupname</td></tr>";
 			$last_groupname = $groupname;
 		}
