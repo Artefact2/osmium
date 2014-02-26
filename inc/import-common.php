@@ -81,7 +81,7 @@ function get_source($textarea_name, $uri_name, $file_name) {
 function fetch($uri) {
 	$f = fopen($uri, 'rb');
 	if($f === false) return false;
-	$contents = fread($f, MAX_FILESIZE);
+	$contents = stream_get_contents($f, MAX_FILESIZE);
 	fclose($f);
 	return $contents;
 }

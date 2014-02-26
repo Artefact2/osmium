@@ -1,6 +1,6 @@
 <?php
 /* Osmium
- * Copyright (C) 2012, 2013 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * Copyright (C) 2012, 2013, 2014 Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -199,6 +199,31 @@ function get_import_formats() {
 				$fits = array_filter($fits);
 				return $fits === array() ? false : $fits;
 			}),
+		'crestkillmail' => array(
+			'CREST killmail', 'full killmail or victim object',
+			function($data, &$errors) {
+				$json = json_decode($data, true);
+				if(!is_array($json) || json_last_error() !== JSON_ERROR_NONE) {
+					$errors[] = 'Fatal: source could not be parsed as a JSON object';
+					return false;
+				}
+
+				if(isset($json['victim'])) {
+					/* OK */
+				} else if(isset($json['shipType']['id']) && is_int($json['shipType']['id'])) {
+					/* Victim object only */
+					$json = [ 'victim' => $json ];
+				} else {
+					$errors[] = 'Fatal: could not identify victim in killmail';
+					return false;
+				}
+
+				$fits = array_filter([
+					try_parse_fit_from_crest_killmail(json_encode($json), $errors)
+				]);
+				return $fits === array() ? false : $fits;
+			}
+		),
 	);
 }
 
@@ -218,6 +243,12 @@ function autodetect_format($source) {
 		)) {
 			/* Input looks like CLF */
 			return 'clf';
+		}
+
+		if(isset($json['victim']['shipType']['id'])
+		   && is_int($json['victim']['shipType']['id'])) {
+			/* Looks like a JSON object returned by the CREST API */
+			return 'crestkillmail';
 		}
 	}
 
@@ -501,6 +532,92 @@ function try_parse_fit_from_eft_format($eftstring, &$errors) {
 
 	$fit['metadata']['tags'] = get_recommended_tags($fit);
 
+	return $fit;
+}
+
+
+
+
+
+/** Try and parse the lost ship from a CREST killmail. */
+function try_parse_fit_from_crest_killmail($jsonstring, &$errors) {
+	require_once __DIR__.CLF_PATH;
+
+	$json = json_decode($jsonstring, true);
+	if(!is_array($json) || json_last_error() !== JSON_ERROR_NONE) {
+		$errors[] = 'Fatal: input could not be parsed as a JSON object';
+		return false;
+	}
+
+	if(!isset($json['victim']) || !is_array($json['victim'])) {
+		$errors[] = 'Fatal: killmail has no victim';
+		return false;
+	}
+
+	$v = $json['victim'];
+	if(!isset($v['shipType']['id']) || !is_int($v['shipType']['id'])
+	   || !\CommonLoadoutFormat\check_typeof_type($v['shipType']['id'], 'ship')) {
+		$errors[] = 'Fatal: no ship or inadequate ship typeid';
+		return false;
+	}
+
+	create($fit);
+	select_ship($fit, $v['shipType']['id']);
+
+	if(isset($v['items']) && is_array($v['items'])) {
+		$items = array_filter(
+			$v['items'],
+			function($i) {
+				return isset($i['itemType']['id']) && is_int($i['itemType']['id'])
+					&& isset($i['flag']) && is_int($i['flag']);
+			}
+		);
+
+		/* Sort by ascending flag values to keep a correct module
+		 * order */
+		usort(
+			$items,
+			function($a, $b) {
+				if($a['flag'] !== $b['flag']) return $a['flag'] - $b['flag'];
+
+				/* Put charges last */
+				return \CommonLoadoutFormat\check_typeof_type($a['itemType']['id'], 'module')
+					? (-1) : 1;
+			}
+		);
+
+		foreach($items as $i) {
+			/* See invflags */
+			$f = $i['flag'];
+			$typeid = $i['itemType']['id'];
+
+			if((11 <= $f && $f <= 34) /* Low/Med/High slots */
+			   || (92 <= $f && $f <= 99) /* Rig slots */
+			   || (125 <= $f && $f <= 132) /* Subsystem slots */
+			   || (87 <= $f && $f <= 89) /* Drone / booster / implant */
+			) {
+				if(\CommonLoadoutFormat\check_typeof_type($typeid, 'module')) {
+					add_module($fit, $f, $typeid);
+				} else if(\CommonLoadoutFormat\check_typeof_type($typeid, 'charge')) {
+					$type = null;
+					foreach($fit['modules'] as $type => $mods) {
+						if(isset($mods[$f])) break;
+					}
+
+					if(isset($fit['modules'][$type][$f])) {
+						add_charge($fit, $type, $f, $typeid);
+					}
+				} else if(\CommonLoadoutFormat\check_typeof_type($typeid, 'drone')) {
+					add_drone_auto($fit, $typeid, 1);
+				} else if(\CommonLoadoutFormat\check_typeof_type($typeid, 'implant')
+				          || \CommonLoadoutFormat\check_typeof_type($typeid, 'booster')) {
+					add_implant($fit, $typeid);
+				}
+			}
+		}
+	}
+
+	$fit['metadata']['tags'] = get_recommended_tags($fit);
 	return $fit;
 }
 
