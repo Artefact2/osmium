@@ -344,8 +344,11 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		if($first === true) {
 			$first = false;
 			/* Only write the <table> tag if there is at least one loadout */
-			echo "<table start='".($offset + 1)."' class='loadout_sr'>\n";
+			echo "<table class='loadout_sr'>\n";
+			echo "<thead>";
 			echo "<tr><th>Ideal</th><th>Ship</th><th>Name</th><th>Tags</th><th>Author</th><th>Social</th></tr>\n";
+			echo "</thead>";
+			echo "<tbody>";
 		}
 
 		$fit = \Osmium\Fit\get_fit($loadout['loadoutid']);
@@ -478,6 +481,7 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 	}
 
 	if($first === false) {
+		echo "</tbody>\n";
 		echo "</table>\n";
 	} else {
 		echo "<p class='placeholder'>".$nothing_message."</p>\n";
