@@ -219,6 +219,15 @@ $reputation-loss-text-color: hsl(0, 100%, 50%);
 $privilege-progress-bg-color: $subsection-bg-color;
 $privilege-progress-done-bg-color: $reputation-gain-text-color;
 
+//
+// Search
+//
+
+$skills-flyable-bg-color: rgba(102, 255, 102, 0.2);
+$skills-sittable-bg-color: rgba(255, 255, 102, 0.2);
+$skills-not-sittable-bg-color: rgba(255, 102, 102, 0.2);
+$skills-undetermined-bg-color: rgba(0, 0, 0, 0.1);
+
 /////////////////////////////////////
 
 @import "../root.scss";

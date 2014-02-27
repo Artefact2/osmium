@@ -128,19 +128,19 @@ table.loadout_sr {
 	}
 
 	tr.flyable {
-		background-color: rgba(102, 255, 102, 0.2);
+		background-color: $skills-flyable-bg-color;
 	}
 
 	tr.sittable {
-		background-color: rgba(255, 255, 102, 0.2);
+		background-color: $skills-sittable-bg-color;
 	}
 
 	tr.not-sittable {
-		background-color: rgba(255, 102, 102, 0.2);
+		background-color: $skills-not-sittable-bg-color;
 	}
 
 	tr.undetermined {
-		background-color: rgba(255, 255, 255, 0.1);
+		background-color: $skills-undetermined-bg-color;
 	}
 
 	div.dps, div.ehp, div.esp {
