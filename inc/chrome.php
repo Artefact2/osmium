@@ -859,3 +859,11 @@ function get_formatted_ship_traits($shiptypeid, $relative) {
 
 	return format_showinfo_links($ret."</div>\n", $relative);
 }
+
+function ship_icon($typeid) {
+	$sn = escape(\Osmium\Fit\get_typename($typeid));
+	return "<div class='ship-icon'>"
+		."<img src='//image.eveonline.com/Render/{$typeid}_256.png' title='$sn' alt='$sn' />"
+		."<span class='name'>$sn</span>"
+		."</div>";
+}

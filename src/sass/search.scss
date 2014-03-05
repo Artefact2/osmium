@@ -68,6 +68,36 @@ section.sr {
 	}
 }
 
+.ship-icon {
+	display: inline-block;
+	vertical-align: middle;
+	position: relative;
+	overflow: hidden;
+	width: 4em;
+	height: 4em;
+	border-radius: 1em;
+
+	img {
+		vertical-align: middle;
+		width: 4em;
+		height: 4em;
+	}
+
+	span.name {
+		position: absolute;
+		bottom: 0px;
+		left: 0px;
+		width: 100%;
+		text-align: center;
+		padding: 0 0.5em;
+		-moz-box-sizing: border-box;
+		box-sizing: border-box;
+		background: rgba($main-bg-color, 0.4);
+		font-size: xx-small;
+		@include ellipsis;
+	}
+}
+
 ol.loadout_sr {
 	margin: 0;
 	padding: 0;
@@ -86,14 +116,7 @@ ol.loadout_sr {
 
 		border-left: 1px solid $subsection-border-color;
 
-		&> a > img:first-child {
-			display: inline-block;
-			width: 4em;
-			height: 4em;
-			vertical-align: middle;
-
-			overflow: hidden;
-			border-radius: 1em;
+		.ship-icon {
 			position: absolute;
 			left: -4.5em;
 			top: 0em;

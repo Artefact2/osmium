@@ -261,8 +261,7 @@ echo get_cache_memory_or_gen('fotw', 603, function() {
 			."<strong>".\Osmium\Chrome\format($f['ehp'], 2, 'k')."</strong> <small>EHP</small><br />"
 			."<strong>".\Osmium\Chrome\format($f['price'], 2)."</strong> <small>ISK</small>"
 			."</div>"
-			."<img class='abs' src='//image.eveonline.com/Render/"
-			.$shipid."_256.png' alt='{$fname}' title='{$fname}' />"
+			.\Osmium\Chrome\ship_icon($shipid)
 			."<div class='absnum losscount'><span><strong>".\Osmium\Chrome\format_integer($f['count'])
 			."</strong><small>lost</small></span></div>\n"
 			."</a></li>\n";
@@ -316,8 +315,7 @@ echo get_cache_memory_or_gen('doctrines', 604, function() {
 			."<strong>".\Osmium\Chrome\format($f['ehp'], 2, 'k')."</strong> <small>EHP</small><br />"
 			."<strong>".\Osmium\Chrome\format($f['price'], 2)."</strong> <small>ISK</small>"
 			."</div>"
-			."<img class='abs' src='//image.eveonline.com/Render/"
-			.$shipid."_256.png' alt='{$fname}' title='{$fname}' />"
+			.\Osmium\Chrome\ship_icon($shipid)
 			."<div title='{$aname}' class='abs alogos n".(count($f['alliances']))."'>\n{$alogos}</div>\n"
 			."<div class='absnum losscount'><span><strong>".\Osmium\Chrome\format_integer($f['count'])
 			."</strong><small>lost</small></span></div>\n"
