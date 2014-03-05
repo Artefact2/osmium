@@ -105,27 +105,8 @@ function print_formatted_mastery(&$fit, $relative, array $prereqs_per_type) {
 		}
 	}
 
-	$sp = function($level, $rank) {
-		if($level == 0) return 0;
-		return ceil(pow(2, 2.5 * ($level - 1.0)) * 250.0 * $rank);
-	};
-
-	foreach($prereqs_unique as $stid => $level) {
-		$current = isset($fit['skillset']['override'][$stid])
-			? $fit['skillset']['override'][$stid] : $fit['skillset']['default'];
-
-		$rank = \Osmium\Fit\get_skill_rank($stid);
-		$needed = ceil(250.0 * $rank * pow(2, 2.5 * ($level - 1.0)));
-
-		$totalsp += $needed;
-
-		if($current >= $level) {
-			continue;
-		}
-
-		$missing_unique[$stid] = $level;
-		$missingsp += $needed - ceil(250.0 * $rank * ($current ? pow(2, 2.5 * ($current - 1.0)) : 0));
-	}
+	$missing_unique = \Osmium\Skills\get_missing_prerequisites_unique($prereqs_unique, $fit['skillset']);
+	list($totalsp, $missingsp) = \Osmium\Skills\sum_sp($prereqs_unique, $fit['skillset']);
 
 	foreach($types_per_prereqs as &$arr) {
 		$arr = array_reverse(array_keys($arr));

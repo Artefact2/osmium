@@ -306,17 +306,19 @@ function print_pretty_results($relative, $query, $more = '', $paginate = false, 
 		return;
 	}
 
+	$ordered_by_shipgroup = isset($_GET['sort']) && $_GET['sort'] == 'attshipgroup';
+
 	if($paginate) {
 		echo $pageinfo;
 		echo $pageresult;
-		print_loadout_list($ids, $relative, $offset, $message);
+		print_loadout_list($ids, $relative, $offset, $message, $ordered_by_shipgroup);
 		echo $pageresult;
 	} else {
-		print_loadout_list($ids, $relative, $offset, $message);
+		print_loadout_list($ids, $relative, $offset, $message, $ordered_by_shipgroup);
 	}
 }
 
-function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message = 'No loadouts.') {
+function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message = 'No loadouts.', $show_ship_group_sections = false) {
 	if($ids === array()) {
 		echo "<p class='placeholder'>".$nothing_message."</p>\n";
 		return;		
@@ -336,11 +338,44 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		WHERE lsr.loadoutid IN ('.$in.') ORDER BY '.$orderby
 	);
 
+	$last_groupname = "";
+
 	while($loadout = \Osmium\Db\fetch_assoc($lquery)) {
 		if($first === true) {
 			$first = false;
-			/* Only write the <ol> tag if there is at least one loadout */
-			echo "<ol start='".($offset + 1)."' class='loadout_sr'>\n";
+			/* Only write the <table> tag if there is at least one loadout */
+			echo "<table class='loadout_sr'>\n";
+			echo "<thead>";
+			echo "<tr><th>Ideal</th><th>Ship</th><th>Name</th><th>Tags</th><th>Author</th><th>Social</th></tr>\n";
+			echo "</thead>";
+			echo "<tbody>";
+		}
+
+		$fit = \Osmium\Fit\get_fit($loadout['loadoutid']);
+		$a = \Osmium\State\get_state('a');
+		if ($a) {
+			\Osmium\Fit\use_default_skillset($fit, $a);
+		}
+		list($prereqs, $missing_prereqs) = \Osmium\Fit\get_skill_prerequisites_and_missing_prerequisites($fit);
+		$prereqs_unique = \Osmium\Skills\uniquify_prerequisites($prereqs);
+		$missing_unique = \Osmium\Skills\uniquify_prerequisites($missing_prereqs);
+
+		// XXX code copying
+		list($groupname) = \Osmium\Db\fetch_row(\Osmium\Db\query_params(
+					'SELECT groupname FROM eve.invtypes
+					JOIN eve.invgroups ON invtypes.groupid = invgroups.groupid
+					WHERE typeid = $1',
+					array($loadout['hullid'])
+					));
+
+		/* TODO: this is a weird special case. It would be cool to take in the
+		 * ordering here and show headers for various orderings (if dps, show
+		 * >0dps, >100dps, >300dps, ...; if creation date, show "today",
+		 * "yesterday", "last week", "last month", ...; etc).
+		 */
+		if ($show_ship_group_sections && $groupname != $last_groupname) {
+			echo "<tr><td colspan='6'>$groupname</td></tr>";
+			$last_groupname = $groupname;
 		}
 
 		$uri = \Osmium\Fit\get_fit_uri(
@@ -349,10 +384,21 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 
 		$sn = \Osmium\Chrome\escape($loadout['typename']);
 
-		echo "<li>\n<a href='$relative/".$uri."'>"
-			."<img class='abs' src='//image.eveonline.com/Render/"
-			.$loadout['hullid']."_256.png' title='".$sn."' alt='".$sn."' /></a>\n";
+		$class = "undetermined";
+		if ($a) {
+			if ($missing_prereqs) {
+				if (isset($missing_prereqs[$loadout['hullid']])) {
+					$class = "not-sittable";
+				} else {
+					$class = "sittable";
+				}
+			} else {
+				$class = "flyable";
+			}
+		}
+		echo "<tr class='$class'>";
 
+		echo "<td class='ideal'>";
 		$dps = $loadout['dps'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['dps'], 2);
 		$ehp = $loadout['ehp'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['ehp'], 2, 'k');
 		$esp = $loadout['estimatedprice'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['estimatedprice'], 2);
@@ -366,12 +412,83 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 
 		echo "<div title='Estimated price of this loadout' class='absnum esp'><span><strong>"
 			.$esp."</strong><small>ISK</small></span></div>\n";
+		echo "</td>";
 
+		echo "<td class='hull'>";
+		echo "\n<a href='$relative/".$uri."'>"
+			."<img class='abs hull-icon' src='//image.eveonline.com/Render/"
+			.$loadout['hullid']."_256.png' title='".$sn."' alt='".$sn."' />\n";
+		echo "<span class='name'>$sn</span>";
+		echo "</a>";
+
+		echo "<div class='sideicons'>\n";
+		print_viewpermission_sprites($loadout);
+		echo "</div>\n";
+		echo "</td>";
+
+		echo "<td>";
 		echo "<a class='fitname' href='{$relative}/{$uri}'>"
 			.\Osmium\Chrome\escape($loadout['name'])."</a>\n";
 
-		echo "<div class='sideicons'>\n";
+		if ($a && $missing_prereqs) {
+			echo "<br />\n";
+			echo "<small>";
+			if (isset($missing_prereqs[$loadout['hullid']])) {
+				list($unused, $hull_needed) = \Osmium\Skills\sum_sp($missing_prereqs[$loadout['hullid']], $fit['skillset']);
+				$h = \Osmium\Chrome\format($hull_needed);
+				echo "Hull in $h SP – ";
+			}
+			list($unused, $all_needed) = \Osmium\Skills\sum_sp($missing_unique, $fit['skillset']);
+			$a = \Osmium\Chrome\format($all_needed);
+			echo "Fit in $a SP";
+			echo "</small>";
+		}
+		echo "</td>";
 
+		echo "<td>";
+		$tags = array_filter(explode(' ', $loadout['taglist']), function($tag) { return trim($tag) != ''; });
+		if(count($tags) == 0) {
+			echo "<em class='notags'>(no tags)</em>\n";
+		} else {
+			echo "<ul class='tags'>\n"
+				.implode('', array_map(function($tag) use($relative) {
+						$tag = trim($tag);
+						return "<li><a href='$relative/search?q="
+							.urlencode('@tags "'.$tag.'"')."'>$tag</a></li>\n";
+					}, $tags))."</ul>\n";
+		}
+		echo "</td>\n";
+
+		echo "<td>";
+		echo "<small>".\Osmium\Chrome\format_character_name($loadout, $relative);
+		echo " (".\Osmium\Chrome\format_reputation($loadout['reputation']).")</small>\n";
+
+		echo "<br/><small>".date('Y-m-d', $loadout['updatedate'])."</small><br />\n";
+		echo "</td>";
+
+		echo "<td>";
+		$votes = (abs($loadout['votes']) == 1) ? 'vote' : 'votes';
+		$upvotes = \Osmium\Chrome\format($loadout['upvotes'], -1);
+		$downvotes = \Osmium\Chrome\format($loadout['downvotes'], -1);
+		echo "+{$upvotes}/-{$downvotes}<br/>\n";
+
+		$comments = ($loadout['comments'] == 1) ? 'comment' : 'comments';
+		echo "<small><small><a href='$relative/".$uri."#comments'>"
+			.\Osmium\Chrome\format($loadout['comments'], -1)." {$comments}</a></small></small>\n";
+		echo "</td>";
+
+		echo "</tr>";
+	}
+
+	if($first === false) {
+		echo "</tbody>\n";
+		echo "</table>\n";
+	} else {
+		echo "<p class='placeholder'>".$nothing_message."</p>\n";
+	}
+}
+
+function print_viewpermission_sprites($loadout) {
 		$vp = $loadout['viewpermission'];
 		$vpsize = 16;
 		if($vp > 0) {
@@ -418,44 +535,6 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 		if((int)$loadout['visibility'] === \Osmium\Fit\VISIBILITY_PRIVATE) {
 			echo \Osmium\Chrome\sprite($relative, "(hidden loadout)", 4, 13, 64, 64, $vpsize);
 		}
-
-		echo "</div>\n";
-
-		echo "<small>".\Osmium\Chrome\format_character_name($loadout, $relative);
-		echo " (".\Osmium\Chrome\format_reputation($loadout['reputation']).")</small>\n";
-
-		echo "<small> — ".date('Y-m-d', $loadout['updatedate'])."</small><br />\n";
-      
-		$votes = (abs($loadout['votes']) == 1) ? 'vote' : 'votes';
-		$upvotes = \Osmium\Chrome\format($loadout['upvotes'], -1);
-		$downvotes = \Osmium\Chrome\format($loadout['downvotes'], -1);
-		echo "<small>"
-			.\Osmium\Chrome\format($loadout['votes'], -1)
-			." {$votes} <small>(+{$upvotes}|-{$downvotes})</small></small>\n";
-
-		$comments = ($loadout['comments'] == 1) ? 'comment' : 'comments';
-		echo "<small> — <a href='$relative/".$uri."#comments'>"
-			.\Osmium\Chrome\format($loadout['comments'], -1)." {$comments}</a></small>\n";
-
-		$tags = array_filter(explode(' ', $loadout['taglist']), function($tag) { return trim($tag) != ''; });
-		if(count($tags) == 0) {
-			echo "<em class='notags'>(no tags)</em>\n";
-		} else {
-			echo "<ul class='tags'>\n"
-				.implode('', array_map(function($tag) use($relative) {
-						$tag = trim($tag);
-						return "<li><a href='$relative/search?q="
-							.urlencode('@tags "'.$tag.'"')."'>$tag</a></li>\n";
-					}, $tags))."</ul>\n";
-		}
-		echo "</li>\n";
-	}
-
-	if($first === false) {
-		echo "</ol>\n";
-	} else {
-		echo "<p class='placeholder'>".$nothing_message."</p>\n";
-	}
 }
 
 function get_search_cond_from_advanced() {

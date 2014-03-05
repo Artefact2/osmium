@@ -61,89 +61,6 @@ div#search_full {
 	}
 }
 
-ol.loadout_sr {
-	margin: 0;
-	padding: 0;
-	list-style-type: none;
-	text-align: left;
-
-	&> li {
-		display: inline-block;
-		position: relative;
-		width: 16em;
-		min-height: 7.25em;
-		vertical-align: top;
-		margin: 1em 3em 1em 7em;
-		padding: 0 0.5em;
-		text-align: left;
-
-		border-left: 1px solid $subsection-border-color;
-
-		&> a > img:first-child {
-			display: inline-block;
-			width: 4em;
-			height: 4em;
-			vertical-align: middle;
-
-			overflow: hidden;
-			border-radius: 1em;
-			position: absolute;
-			left: -4.5em;
-			top: 0em;
-		}
-
-		&> a.fitname {
-			display: block;
-			@include ellipsis;
-		}
-
-		&> div.dps, &> div.ehp, &> div.esp {
-			position: absolute;
-			left: -4.75em;
-			width: 4.25em;
-			@include ellipsis;
-			text-align: right;
-
-			&> span > strong:after {
-				content: " ";
-			}
-
-			&.dps {
-				top: 4.25em;
-			}
-
-			&.ehp {
-				top: 5.25em;
-			}
-
-			&.esp {
-				top: 6.25em;
-			}
-		}
-
-		&> div.sideicons {
-			position: absolute;
-			left: -5.25em;
-			top: 0.5em;
-			width: 16px;
-		}
-
-		&> small, &> small > a {
-			color: $loadout-search-metadata-text-color;
-			text-decoration: none;
-		}
-
-		&> em.notags {
-			display: block;
-			opacity: 0.5;
-		}
-
-		&> ul.tags {
-			opacity: 0.8;
-		}
-	}
-}
-
 p.pagination {
 	color: $pagination-meta-text-color;
 	font-size: 0.8em;
@@ -191,6 +108,76 @@ ol.pagination {
 
 		&.dummy {
 			opacity: 0.2;
+		}
+	}
+}
+
+table.loadout_sr {
+	margin-left: auto;
+	margin-right: auto;
+
+	th {
+		text-align: left;
+		padding-left: 6px;
+	}
+
+	border-spacing: 0 5px;
+	td {
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+
+	tr.flyable {
+		background-color: $skills-flyable-bg-color;
+	}
+
+	tr.sittable {
+		background-color: $skills-sittable-bg-color;
+	}
+
+	tr.not-sittable {
+		background-color: $skills-not-sittable-bg-color;
+	}
+
+	tr.undetermined {
+		background-color: $skills-undetermined-bg-color;
+	}
+
+	div.dps, div.ehp, div.esp {
+		text-align: right;
+
+		&> span > strong:after {
+			content: " ";
+		}
+	}
+
+	td.ideal {
+		white-space: nowrap;
+	}
+
+	td.hull a {
+		display: block;
+		position: relative;
+		border-radius: 1em;
+		overflow: hidden;
+
+		&> img.hull-icon {
+			width: 4em;
+			height: 4em;
+		}
+
+		&> .name {
+			position: absolute;
+			bottom: 0px;
+			left: 0px;
+			width: 100%;
+			padding: 0 0.5em;
+			box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			text-align: center;
+			background: rgba(0, 0, 0, 0.4);
+			font-size: xx-small;
+			@include ellipsis;
 		}
 	}
 }

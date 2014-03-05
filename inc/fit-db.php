@@ -1180,6 +1180,41 @@ function fetch_fit_uri($loadoutid) {
 }
 
 /**
+ * Grabs a skillset associated with the current account.
+ *
+ * @todo have some proper way to specify the default skillset.
+ * @see use_skillset()
+ */
+function use_default_skillset(&$fit, $a) {
+	if(!isset($a['accountid'])) {
+		use_skillset($fit, array(), 5, 'All V');
+		return 'All V';
+	}
+
+	$row = \Osmium\Db\fetch_assoc(
+		\Osmium\Db\query_params(
+			'SELECT importedskillset, overriddenskillset, name FROM osmium.accountcharacters
+			WHERE accountid = $1 LIMIT 1',
+			array($a['accountid'])
+		));
+	if($row === false) {
+		 /* No skillsets */
+		use_skillset($fit, array(), 5, 'All V');
+		return 'All V';
+	}
+
+	$skillset = json_decode($row['importedskillset'], true);
+	$overridden = json_decode($row['overriddenskillset'], true);
+	if(!is_array($skillset)) $skillset = array();
+	if(!is_array($overridden)) $overridden = array();
+	foreach($overridden as $typeid => $l) {
+		$skillset[$typeid] = $l;
+	}
+	use_skillset($fit, $skillset, 0, $row['name']);
+	return $row['name'];
+}
+
+/**
  * Parses a skillset title and fetches it using characters of account
  * $a.
  *
@@ -1242,29 +1277,6 @@ function get_available_skillset_names_for_account() {
 	return $names;
 }
 
-/**
- * Takes in an array of item/module type IDs; fills the $result array with entries like:
- *     input_type_id => array(
- *         skill_type_id => required_level,
- *         ...
- *     )
- */
-function get_skill_prerequisites_for_types(array $types, array &$result) {
-	foreach ($types as $typeid) {
-		if(!isset($result[$typeid])) {
-			$result[$typeid] = [];
-		}
-
-		foreach(get_required_skills($typeid) as $stid => $slevel) {
-			if(!isset($result[$stid])) {
-				get_skill_prerequisites_for_types([ $stid ], $result);
-			}
-
-			$result[$typeid][$stid] = $slevel;
-		}
-	}
-}
-
 function get_skill_prerequisites_and_missing_prerequisites($fit) {
 	$types = array();
 
@@ -1293,23 +1305,9 @@ function get_skill_prerequisites_and_missing_prerequisites($fit) {
 	}
 
 	$types = array_keys($types);
-	$prereqs = $missing = array();
-
-	get_skill_prerequisites_for_types($types, $prereqs);
-
-	foreach($types as $tid) {
-		if(!isset($prereqs[$tid])) continue;
-
-		foreach($prereqs[$tid] as $stid => $level) {
-			$current = isset($fit['skillset']['override'][$stid])
-				? $fit['skillset']['override'][$stid] : $fit['skillset']['default'];
-
-			if($current < $level) {
-				$missing[$tid] = 1;
-				break;
-			}
-		}
-	}
+    $prereqs = array();
+	\Osmium\Skills\get_skill_prerequisites_for_types($types, $prereqs);
+	$missing = \Osmium\Skills\get_missing_prerequisites($prereqs, $fit['skillset']);
 
 	return [ $prereqs, $missing ];
 }
