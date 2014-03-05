@@ -371,9 +371,10 @@ function print_loadout_list(array $ids, $relative, $offset = 0, $nothing_message
 
 		$sn = \Osmium\Chrome\escape($loadout['typename']);
 
-		echo "<li>\n<a href='$relative/".$uri."'>"
-			."<img class='abs' src='//image.eveonline.com/Render/"
-			.$loadout['hullid']."_256.png' title='".$sn."' alt='".$sn."' /></a>\n";
+		echo "<li>\n";
+		echo "<a href='$relative/$uri'>\n";
+		echo \Osmium\Chrome\ship_icon($loadout['hullid']);
+		echo "</a>";
 
 		$dps = $loadout['dps'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['dps'], 2);
 		$ehp = $loadout['ehp'] === null ? 'N/A' : \Osmium\Chrome\format($loadout['ehp'], 2, 'k');
