@@ -173,8 +173,11 @@ function format_duration($seconds) {
 }
 
 function format_long_duration($seconds, $precision = 6) {
+	$tz = date_default_timezone_get();
+	date_default_timezone_set('UTC');
 	list($y, $m, $d, $h, $i, $s) = explode('-', date('Y-m-d-H-i-s', 0));
 	list($Y, $M, $D, $H, $I, $S) = explode('-', date('Y-m-d-H-i-s', $seconds));
+	date_default_timezone_set($tz);
 
 	$years = $Y - $y;
 	$months = $M - $m;
