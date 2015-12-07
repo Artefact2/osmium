@@ -677,6 +677,7 @@ if ($errors == NULL)  {
 		}
 }
 $fit['metadata']['tags'] = \Osmium\Fit\get_recommended_tags($fit);
+array_push($fit['metadata']['tags'], 'crest');
 return $fit;
 }
 
