@@ -493,7 +493,7 @@ function assume_logged_out() {
  * @param $payload some data that dictates what to do when the API
  * successfully returns a character.
  */
-function ccp_oauth_redirect($payload) {
+function ccp_oauth_redirect($payload, $scope=null) {
 	if(!\Osmium\get_ini_setting('ccp_oauth_available')) {
 		\Osmium\fatal(403, 'CCP OAuth not available on this Osmium instance.');
 	}
@@ -512,7 +512,7 @@ function ccp_oauth_redirect($payload) {
 			'response_type' => 'code',
 			'redirect_uri' => \Osmium\get_absolute_root().'/internal/auth/ccpoauthcallback',
 			'client_id' => \Osmium\get_ini_setting('ccp_oauth_clientid'),
-			'scope' => '',
+			'scope' => $scope,
 			'state' => $state,
 		])
 	);
