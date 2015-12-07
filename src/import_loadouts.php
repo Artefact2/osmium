@@ -143,39 +143,37 @@ $tbody->appendCreate('tr', [
 if(\Osmium\get_ini_setting('ccp_oauth_available') AND \Osmium\State\is_logged_in()) {
 
 $p->content->appendCreate('h1', 'Import CREST loadouts');
-
-$tbody = $p->content->appendCreate('o-form', [
-	'o-rel-action' => $_SERVER['REQUEST_URI'],
+$form = $p->content->appendCreate('o-form', [
 	'method' => 'post',
-])->appendCreate('table')->appendCreate('tbody');
+	'o-rel-action' => '/import',
+]);
 
-$tr = $tbody->appendCreate('tr');
+$tbody = $form->appendCreate('table')->appendCreate('tbody');
 
-$tr->appendCreate('td')->appendCreate('input', [
-		'name' => 'ccpssoinit',
-		'value' => 'Sign in with an EVE character',
-		'type' => 'submit',
-	]);
+$selectcharacter = $p->element('input', [ 'name' => 'ccpssoinit', 'id' => 'importcrest', 'value' => 'Sign in', 'type' => 'submit' ]);
+
+$tbody->appendCreate('tr', [
+	[ 'th', [[ 'label', [ 'for' => 'importcrest', 'Select EVE character' ] ]] ],
+	[ 'td', $selectcharacter ],
+]);
 
 if(\Osmium\State\get_state('import_CharacterID') != ''){
 
-$tr = $tbody->appendCreate('tr');
-
 $characterid = \Osmium\State\get_state('import_CharacterID');
 $charactername = \Osmium\State\get_state('import_CharacterName');
+$fetchbutton = $p->element('input', ['id' => 'importcrest','name' => 'importcrest','value' => 'Fetch CREST fits','characterid' => $characterid,'type' => 'submit',]);
 
-$tr->appendCreate('tr.separator');
-
-$tr->appendCreate('td')->append([[ 'o-eve-img', [ 'src' => '/Character/'.$characterid.'_64.jpg','alt' => $charactername , 'title' => $charactername  ] ]
-	])->append( ' ' . $charactername . ' ')->appendCreate('input', [
-		'id' => 'importcrest',
-		'name' => 'importcrest',
-		'value' => 'Fetch CREST fits',
-		'characterid' => $characterid,
-		'type' => 'submit',
-	]);
+$tbody->appendCreate('td', [
+	[ 'th', [[ 'label', [ 'for' => 'importcrest', 'Selected character' ] ]] ],
+]);
+$tbody->appendCreate('td')->appendCreate('div', [ 'class' => 'ship-icon' ])->append([
+[ 'o-eve-img', [ 'src' => '/Character/'.$characterid.'_64.jpg', 'title' => $charactername, 'alt' => $charactername ] ],
+[ 'span', [ 'class' => 'name', $charactername ] ],
+]);
+$tbody->appendCreate('td')->append($fetchbutton);
 }
 }
+
 
 
 $p->snippets[] = 'import';

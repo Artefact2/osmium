@@ -63,3 +63,8 @@ $(function() {
 		$(this).blur();
 	});
 });
+
+//$("#importcrest").on( "click", function() {
+//console.log('SSO auth started');
+//window.location.href = '../importcrest';
+//});
