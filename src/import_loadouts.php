@@ -32,7 +32,7 @@ if(!\Osmium\State\is_logged_in()) {
 
 if(isset($_POST['ccpssoinit'])) {
 
-\Osmium\State\ccp_oauth_redirect(['action' => 'import',], 'characterFittingsRead characterFittingsWrite');
+\Osmium\State\ccp_oauth_redirect(['action' => 'import',], 'characterFittingsRead');
 
 }
 
