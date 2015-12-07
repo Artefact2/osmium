@@ -619,7 +619,7 @@ function ccp_oauth_get_characterid($accesstoken, &$errorstr = null) {
 }
 
 /* Get an accesstoken from a refresh token  */
-function get_access_token() {
+function ccp_oauth_get_token() {
 	$refreshtoken = \Osmium\State\get_state('refresh_token');
 	$fields = array('grant_type' => 'refresh_token','refresh_token' => $refreshtoken);
 	$header = 'Authorization: Basic '.base64_encode(\Osmium\get_ini_setting('ccp_oauth_clientid').':'.\Osmium\get_ini_setting('ccp_oauth_secret'));
@@ -642,7 +642,7 @@ function get_access_token() {
 
 /* Get all fittings from a character. */
 function ccp_oauth_get_fittings($characterid) {
-	$accesstoken = get_access_token();
+	$accesstoken = ccp_oauth_get_token();
 	$c = \Osmium\curl_init_branded(\Osmium\get_ini_setting('ccp_oauth_crest').'/characters/'. $characterid .'/fittings/');
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($c, CURLOPT_HTTPHEADER, [ 'Authorization: Bearer '.$accesstoken ]);
@@ -683,7 +683,7 @@ return $fit;
 
 /* Post a fitting to EVE. */
 function ccp_oauth_post_fitting($characterid, $fitting_data) {
-	$accesstoken = get_access_token();
+	$accesstoken = ccp_oauth_get_token();
 	$c = \Osmium\curl_init_branded(\Osmium\get_ini_setting('ccp_oauth_crest').'/characters/'. $characterid .'/fittings/');
 	$authHeader = "Authorization: Bearer $accesstoken";
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
