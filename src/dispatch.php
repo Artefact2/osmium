@@ -45,6 +45,7 @@ function get_rules($prefix) {
 			'%^/new$%D' => '/src/new_loadout.php',
 			'%^/login$%D' => '/src/login.php',
 			'%^/import$%D' => '/src/import_loadouts.php',
+			'%^/importcrest$%D' => '/src/import_crest.php',
 			'%^/convert%D' => '/src/convert.php',
 			'%^/register$%D' => '/src/register.php',
 			'%^/settings$%D' => '/src/settings.php',

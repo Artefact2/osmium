@@ -30,6 +30,19 @@ if(!\Osmium\State\is_logged_in()) {
 	$_POST['editimport'] = 'on';
 }
 
+if(isset($_POST['ccpssoinit'])) {
+
+\Osmium\State\ccp_oauth_redirect(['action' => 'import',], 'characterFittingsRead');
+
+}
+
+if(isset($_POST['importcrest'])) {
+
+header ("Location: ../importcrest"); 
+
+}
+
+
 $a = \Osmium\State\get_state('a');
 
 $p = new \Osmium\DOM\Page();
@@ -126,6 +139,40 @@ $tbody->appendCreate('tr', [
 		[ 'input', [ 'type' => 'submit', 'value' => 'Import' ] ]
 	]],
 ]);
+
+if(\Osmium\get_ini_setting('ccp_oauth_available') AND \Osmium\State\is_logged_in()) {
+
+$p->content->appendCreate('h1', 'Import CREST loadouts');
+$form = $p->content->appendCreate('o-form', [
+	'method' => 'post',
+	'o-rel-action' => '/import',
+]);
+
+$tbody = $form->appendCreate('table')->appendCreate('tbody');
+
+$selectcharacter = $p->element('input', [ 'name' => 'ccpssoinit', 'id' => 'importcrest', 'value' => 'Sign in', 'type' => 'submit' ]);
+
+$tbody->appendCreate('tr', [
+	[ 'th', [[ 'label', [ 'for' => 'importcrest', 'Select EVE character' ] ]] ],
+	[ 'td', $selectcharacter ],
+]);
+
+if(\Osmium\State\get_state('import_CharacterID') != ''){
+
+$characterid = \Osmium\State\get_state('import_CharacterID');
+$charactername = \Osmium\State\get_state('import_CharacterName');
+$fetchbutton = $p->element('input', ['id' => 'importcrest','name' => 'importcrest','value' => 'Fetch CREST fits','characterid' => $characterid,'type' => 'submit',]);
+
+$tbody->appendCreate('td', [
+	[ 'th', [[ 'label', [ 'for' => 'importcrest', 'Selected character' ] ]] ],
+]);
+$tbody->appendCreate('td')->appendCreate('div', [ 'class' => 'ship-icon' ])->append([
+[ 'o-eve-img', [ 'src' => '/Character/'.$characterid.'_64.jpg', 'title' => $charactername, 'alt' => $charactername ] ],
+[ 'span', [ 'class' => 'name', $charactername ] ],
+]);
+$tbody->appendCreate('td')->append($fetchbutton);
+}
+}
 
 
 

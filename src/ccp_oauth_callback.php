@@ -44,6 +44,16 @@ if(!isset($payload['action'])) \Osmium\fatal(400, 'Missing payload.');
 
 switch((string)$payload['action']) {
 
+case 'import':
+	\Osmium\State\assume_logged_in();
+	\Osmium\State\put_state('access_token', $json['access_token']);
+	\Osmium\State\put_state('refresh_token', $json['refresh_token']);
+	\Osmium\State\put_state('import_CharacterID', $cjson['CharacterID']);
+	\Osmium\State\put_state('import_CharacterName', $cjson['CharacterName']);
+	header('Location: ../../import', true, 303);
+	die();
+break;
+
 case 'associate':
 	\Osmium\State\assume_logged_in();
 	$a = \Osmium\State\get_state('a');

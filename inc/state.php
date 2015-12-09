@@ -493,7 +493,7 @@ function assume_logged_out() {
  * @param $payload some data that dictates what to do when the API
  * successfully returns a character.
  */
-function ccp_oauth_redirect($payload) {
+function ccp_oauth_redirect($payload, $scope=null) {
 	if(!\Osmium\get_ini_setting('ccp_oauth_available')) {
 		\Osmium\fatal(403, 'CCP OAuth not available on this Osmium instance.');
 	}
@@ -512,7 +512,7 @@ function ccp_oauth_redirect($payload) {
 			'response_type' => 'code',
 			'redirect_uri' => \Osmium\get_absolute_root().'/internal/auth/ccpoauthcallback',
 			'client_id' => \Osmium\get_ini_setting('ccp_oauth_clientid'),
-			'scope' => '',
+			'scope' => $scope,
 			'state' => $state,
 		])
 	);
@@ -615,5 +615,84 @@ function ccp_oauth_get_characterid($accesstoken, &$errorstr = null) {
 		return false;
 	}
 
+	return $json;
+}
+
+/* Get an accesstoken from a refresh token  */
+function ccp_oauth_get_token() {
+	$refreshtoken = \Osmium\State\get_state('refresh_token');
+	$fields = array('grant_type' => 'refresh_token','refresh_token' => $refreshtoken);
+	$header = 'Authorization: Basic '.base64_encode(\Osmium\get_ini_setting('ccp_oauth_clientid').':'.\Osmium\get_ini_setting('ccp_oauth_secret'));
+	$fields_string = '';
+	foreach ($fields as $key => $value) {
+		$fields_string .= $key.'='.$value.'&';
+	}
+	rtrim($fields_string, '&');
+	$c = \Osmium\curl_init_branded(\Osmium\get_ini_setting('ccp_oauth_root').'/oauth/token');
+	curl_setopt($c, CURLOPT_HTTPHEADER, array($header));
+	curl_setopt($c, CURLOPT_POST, count($fields));
+	curl_setopt($c, CURLOPT_POSTFIELDS, $fields_string);
+	curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
+	$result = curl_exec($c);
+	$result = json_decode($result, true);
+	$accessToken = $result['access_token'];
+	\Osmium\State\put_state('access_token', $accessToken);
+	return $accessToken;
+}
+
+/* Get all fittings from a character. */
+function ccp_oauth_get_fittings($characterid) {
+	$accesstoken = ccp_oauth_get_token();
+	$c = \Osmium\curl_init_branded(\Osmium\get_ini_setting('ccp_oauth_crest').'/characters/'. $characterid .'/fittings/');
+	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($c, CURLOPT_HTTPHEADER, [ 'Authorization: Bearer '.$accesstoken ]);
+	$result = curl_exec($c);
+	$httpCode = curl_getinfo($c, CURLINFO_HTTP_CODE);
+	curl_close($c);
+	$json = json_decode($result, true);
+	$json['httpCode'] = $httpCode;
+	return $json;
+}
+ 
+/*  Return fitting data from a CREST loadout */
+function crest_to_fit($fitting_data) {
+$fit = \Osmium\Fit\try_parse_fit_from_shipdna($fitting_data['ship']['id_str'] . '::', $fitting_data['name'], $errors);
+if ($errors == NULL)  {
+
+	$items = $fitting_data['items'];
+		foreach ($items as $item) {
+
+			if( ($item['flag'] > 10 && $item['flag'] < 35) || ($item['flag'] > 91 && $item['flag'] < 100) || ($item['flag'] > 124 && $item['flag'] < 133) ) {
+				\Osmium\Fit\add_module($fit, $item['flag'], $item['type']['id']);
+			}
+
+			if ($item['flag'] == 87 ) {
+				\Osmium\Fit\add_drone_auto($fit, $item['type']['id'],$item['quantity']);
+			}
+
+			if ($item['flag'] == 5 ) {
+				\Osmium\Fit\add_charge_auto($fit, $item['type']['id'],$item['quantity']);
+			}				
+
+		}
+}
+$fit['metadata']['tags'] = \Osmium\Fit\get_recommended_tags($fit);
+array_push($fit['metadata']['tags'], 'crest');
+return $fit;
+}
+
+/* Post a fitting to EVE. */
+function ccp_oauth_post_fitting($characterid, $fitting_data) {
+	$accesstoken = ccp_oauth_get_token();
+	$c = \Osmium\curl_init_branded(\Osmium\get_ini_setting('ccp_oauth_crest').'/characters/'. $characterid .'/fittings/');
+	$authHeader = "Authorization: Bearer $accesstoken";
+	curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($c, CURLOPT_HTTPHEADER, array($authHeader, 'Content-Type:application/json'));
+	curl_setopt($c, CURLOPT_POSTFIELDS, $fitting_data);
+	$result = curl_exec($c);
+	$httpCode = curl_getinfo($c, CURLINFO_HTTP_CODE);
+	curl_close($c);
+	$json = json_decode($result, true);
+	$json['httpCode'] = $httpCode;
 	return $json;
 }
