@@ -163,7 +163,7 @@ function export_to_svg($fit, $embedclf = true){
 function svg_gen_header($fit, \Osmium\DOM\Document $d) {
 	$g = $d->createElement('g');
 	$g->setAttribute('id', 'head');
-
+	
 	$a = $g->appendCreate('a#ship', [
 		'target' => '_top',
 		'o-rel-xhref' => '/db/type/'.$fit['ship']['typeid'],
@@ -217,7 +217,8 @@ function svg_gen_header($fit, \Osmium\DOM\Document $d) {
 		$a->setAttribute('o-rel-xhref', '/'.get_fit_uri(
 			$fit['metadata']['loadoutid'],
 			$fit['metadata']['visibility'],
-			$fit['metadata']['privatetoken']
+			$fit['metadata']['privatetoken'],
+			isset($fit['metadata']['revision']) ? $fit['metadata']['revision'] : null
 		));
 	} else {
 		$a->setAttribute('o-rel-xhref', '/loadout/dna/'.export_to_dna($fit));
